@@ -128,7 +128,7 @@ export default function CustomersPage() {
           <div className="text-center py-24">
             <div className="text-5xl mb-4">📇</div>
             <h2 className="text-xl font-semibold text-gray-700 mb-2">顧客データがありません</h2>
-            <p className="text-gray-500 mb-6">まず Eight の CSV をアップロードしてください</p>
+            <p className="text-gray-500 mb-6">まず名刺登録アプリの CSV をアップロードしてください</p>
             <Link
               href="/"
               className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 text-sm font-medium"

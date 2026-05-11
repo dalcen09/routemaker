@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { parseEightCsv } from "@/lib/parseEightCsv";
+import { parseEightCsv as parseCsv } from "@/lib/parseEightCsv";
 import { Customer } from "@/lib/types";
 
 interface Props {
@@ -20,12 +20,11 @@ export default function CsvUploader({ onCustomersLoaded }: Props) {
       return;
     }
 
-    // Eight exports in Shift-JIS or UTF-8; try UTF-8 first
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const text = e.target?.result as string;
-        const customers = parseEightCsv(text);
+        const customers = parseCsv(text);
         if (customers.length === 0) {
           setError("住所が含まれる連絡先が見つかりませんでした。CSVに「住所」列があるか確認してください。");
           return;
@@ -62,7 +61,7 @@ export default function CsvUploader({ onCustomersLoaded }: Props) {
       >
         <div className="text-5xl mb-4">📇</div>
         <p className="text-lg font-medium text-gray-700 mb-1">
-          Eight の CSV ファイルをアップロード
+          名刺登録アプリの CSV ファイルをアップロード
         </p>
         <p className="text-sm text-gray-500 mb-4">
           ドラッグ＆ドロップ、またはクリックして選択
@@ -86,9 +85,9 @@ export default function CsvUploader({ onCustomersLoaded }: Props) {
       )}
 
       <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-        <p className="font-medium mb-1">Eight からのエクスポート方法</p>
+        <p className="font-medium mb-1">名刺登録アプリからのエクスポート方法</p>
         <ol className="list-decimal list-inside space-y-1 text-xs">
-          <li>Eight アプリ → 名刺一覧 → エクスポート</li>
+          <li>名刺登録アプリ → 名刺一覧 → エクスポート</li>
           <li>「CSV でエクスポート」を選択</li>
           <li>ダウンロードしたファイルをこちらにアップロード</li>
         </ol>
