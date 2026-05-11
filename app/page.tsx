@@ -60,7 +60,7 @@ export default function Home() {
           <span className="text-2xl">🗺️</span>
           <div>
             <h1 className="text-xl font-bold text-gray-900">RouteMaker</h1>
-            <p className="text-xs text-gray-500">Eight 名刺 CSV から最適訪問ルートを作成</p>
+            <p className="text-xs text-gray-500">最適訪問ルートを作成</p>
           </div>
           <nav className="ml-6 flex gap-4 text-sm">
             <span className="text-blue-600 font-medium border-b-2 border-blue-600 pb-0.5">ルート計画</span>

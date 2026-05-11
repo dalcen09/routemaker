@@ -110,7 +110,7 @@ export default function CustomersPage() {
           <span className="text-2xl">🗺️</span>
           <div>
             <h1 className="text-xl font-bold text-gray-900">RouteMaker</h1>
-            <p className="text-xs text-gray-500">Eight 名刺 CSV から最適訪問ルートを作成</p>
+            <p className="text-xs text-gray-500">最適訪問ルートを作成</p>
           </div>
           <nav className="ml-6 flex gap-4 text-sm">
             <Link href="/" className="text-gray-500 hover:text-gray-800">

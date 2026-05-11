@@ -10,7 +10,7 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: "RouteMaker - 訪問ルート計画",
-  description: "名刺アプリ Eight の CSV から最適訪問ルートを作成",
+  description: "最適訪問ルートを作成",
 };
 
 export default function RootLayout({
