@@ -109,7 +109,7 @@ export default function CustomersPage() {
         <div className="max-w-7xl mx-auto flex items-center gap-3">
           <span className="text-2xl">🗺️</span>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">RouteMaker</h1>
+            <h1 className="text-xl font-bold text-gray-900">Route Planner</h1>
             <p className="text-xs text-gray-500">最適訪問ルートを作成</p>
           </div>
           <nav className="ml-6 flex gap-4 text-sm">

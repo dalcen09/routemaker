@@ -9,7 +9,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "RouteMaker - 訪問ルート計画",
+  title: "Route Planner - 訪問ルート計画",
   description: "最適訪問ルートを作成",
 };
 
