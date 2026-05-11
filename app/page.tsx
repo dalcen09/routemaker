@@ -2,11 +2,13 @@
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
+import Link from "next/link";
 import CsvUploader from "@/components/CsvUploader";
 import CustomerSelector from "@/components/CustomerSelector";
 import StartLocationInput from "@/components/StartLocationInput";
 import RouteResults from "@/components/RouteResults";
 import { usePlanner } from "@/lib/usePlanner";
+import { useCustomers } from "@/lib/CustomerContext";
 import { Customer, StartLocation } from "@/lib/types";
 
 const RouteMap = dynamic(() => import("@/components/RouteMap"), { ssr: false });
@@ -15,7 +17,7 @@ type Step = "upload" | "select" | "plan" | "result";
 
 export default function Home() {
   const [step, setStep] = useState<Step>("upload");
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const { customers, setCustomers } = useCustomers();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [start, setStart] = useState<StartLocation | null>(null);
   const { state, progress, result, error, plan, reset } = usePlanner();
@@ -41,6 +43,13 @@ export default function Home() {
     setStep("upload");
   }
 
+  function handleReplanWithSameCustomers() {
+    reset();
+    setSelected(new Set(customers.map((c) => c.id)));
+    setStart(null);
+    setStep("select");
+  }
+
   const isPlanning = state === "geocoding" || state === "routing";
 
   return (
@@ -53,6 +62,14 @@ export default function Home() {
             <h1 className="text-xl font-bold text-gray-900">RouteMaker</h1>
             <p className="text-xs text-gray-500">Eight 名刺 CSV から最適訪問ルートを作成</p>
           </div>
+          <nav className="ml-6 flex gap-4 text-sm">
+            <span className="text-blue-600 font-medium border-b-2 border-blue-600 pb-0.5">ルート計画</span>
+            {customers.length > 0 && (
+              <Link href="/customers" className="text-gray-500 hover:text-gray-800">
+                顧客一覧 ({customers.length})
+              </Link>
+            )}
+          </nav>
           {step !== "upload" && (
             <button
               onClick={handleFullReset}
