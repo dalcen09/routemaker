@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { useCustomers } from "@/lib/CustomerContext";
 import { useAuth } from "@/lib/useAuth";
@@ -11,6 +12,11 @@ const CustomersMap = dynamic(() => import("@/components/CustomersMap"), { ssr: f
 function MapInner() {
   const { customers, loading } = useCustomers();
   const { user, signOut } = useAuth();
+  const router = useRouter();
+
+  function handleGenerateRoute(ids: string[]) {
+    router.push(`/?selected=${encodeURIComponent(ids.join(","))}`);
+  }
 
   return (
     <div className="h-screen flex flex-col bg-slate-50">
@@ -81,7 +87,7 @@ function MapInner() {
           </div>
         ) : (
           <div className="flex-1 relative">
-            <CustomersMap customers={customers} />
+            <CustomersMap customers={customers} onGenerateRoute={handleGenerateRoute} />
           </div>
         )}
       </main>
