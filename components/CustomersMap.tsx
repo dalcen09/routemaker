@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import { Customer } from "@/lib/types";
 
-interface GeoCustomer extends Customer {
+export interface GeoCustomer extends Customer {
   lat: number;
   lng: number;
 }
@@ -14,10 +14,11 @@ const ORANGE = { fill: "#EA580C", stroke: "#fff", scale: 11 };
 
 interface Props {
   customers: Customer[];
-  onGenerateRoute: (ids: string[]) => void;
+  selected: Set<string>;
+  onToggle: (id: string) => void;
 }
 
-export default function CustomersMap({ customers, onGenerateRoute }: Props) {
+export default function CustomersMap({ customers, selected, onToggle }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
@@ -26,46 +27,25 @@ export default function CustomersMap({ customers, onGenerateRoute }: Props) {
   const [geocoded, setGeocoded] = useState<GeoCustomer[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [geocoding, setGeocoding] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const withAddress = customers.filter((c) => c.address.trim().length > 0);
 
-  // Update marker icon when selection changes
-  const setMarkerStyle = useCallback((id: string, isSelected: boolean) => {
-    const marker = markersRef.current.get(id);
-    if (!marker) return;
-    const s = isSelected ? ORANGE : BLUE;
-    marker.setIcon({
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: s.scale,
-      fillColor: s.fill,
-      fillOpacity: 1,
-      strokeColor: s.stroke,
-      strokeWeight: 2,
+  // Sync marker styles when selection changes
+  useEffect(() => {
+    markersRef.current.forEach((marker, id) => {
+      const isSelected = selected.has(id);
+      const s = isSelected ? ORANGE : BLUE;
+      marker.setIcon({
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: s.scale,
+        fillColor: s.fill,
+        fillOpacity: 1,
+        strokeColor: s.stroke,
+        strokeWeight: 2,
+      });
+      marker.setZIndex(isSelected ? 10 : 1);
     });
-    marker.setZIndex(isSelected ? 10 : 1);
-  }, []);
-
-  function toggleSelected(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-        setMarkerStyle(id, false);
-      } else {
-        next.add(id);
-        setMarkerStyle(id, true);
-      }
-      return next;
-    });
-  }
-
-  function clearSelection() {
-    setSelected((prev) => {
-      prev.forEach((id) => setMarkerStyle(id, false));
-      return new Set();
-    });
-  }
+  }, [selected]);
 
   // Geocode all customers in batches of 8
   useEffect(() => {
@@ -141,7 +121,7 @@ export default function CustomersMap({ customers, onGenerateRoute }: Props) {
     return () => { cancelled = true; };
   }, []);
 
-  // Add/update markers as geocoding progresses
+  // Add/update markers when geocoded list grows
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || geocoded.length === 0) return;
@@ -151,7 +131,6 @@ export default function CustomersMap({ customers, onGenerateRoute }: Props) {
       const { Marker } = await importLibrary("marker");
       const bounds = new google.maps.LatLngBounds();
 
-      // Clear existing markers
       markersRef.current.forEach((m) => m.setMap(null));
       markersRef.current.clear();
 
@@ -178,10 +157,7 @@ export default function CustomersMap({ customers, onGenerateRoute }: Props) {
         });
 
         marker.addListener("click", () => {
-          // Toggle selection
-          toggleSelected(c.id);
-
-          // Show info window
+          onToggle(c.id);
           infoWindowRef.current?.setContent(`
             <div style="font-family:sans-serif;padding:4px 2px;min-width:180px">
               <div style="font-weight:600;font-size:14px;margin-bottom:4px">
@@ -208,7 +184,7 @@ export default function CustomersMap({ customers, onGenerateRoute }: Props) {
   const pct = progress.total ? Math.round((progress.done / progress.total) * 100) : 0;
 
   return (
-    <div className="relative w-full h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
+    <div className="relative w-full h-full">
       <div ref={mapRef} className="absolute inset-0" />
 
       {/* Progress overlay */}
@@ -230,47 +206,12 @@ export default function CustomersMap({ customers, onGenerateRoute }: Props) {
         </div>
       )}
 
-      {/* Count badge */}
+      {/* Hint when nothing selected */}
       {!geocoding && geocoded.length > 0 && selected.size === 0 && (
-        <div className="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur border border-slate-200 rounded-xl shadow-sm px-3 py-1.5 text-xs font-medium text-slate-700">
-          {geocoded.length} 件を表示中
-          {geocoded.length < withAddress.length && (
-            <span className="text-slate-400 ml-1">（{withAddress.length - geocoded.length} 件は住所不明）</span>
-          )}
-          <span className="text-slate-400 ml-2">· マーカーをクリックして選択</span>
-        </div>
-      )}
-
-      {/* Selection action bar */}
-      {selected.size > 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 bg-slate-900 text-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center">
-              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-              </svg>
-            </div>
-            <span className="text-sm font-semibold">{selected.size} 件選択中</span>
-          </div>
-
-          <div className="w-px h-5 bg-white/20" />
-
-          <button
-            onClick={clearSelection}
-            className="text-xs text-white/60 hover:text-white transition-colors"
-          >
-            選択解除
-          </button>
-
-          <button
-            onClick={() => onGenerateRoute([...selected])}
-            className="bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold px-4 py-1.5 rounded-xl transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
-            </svg>
-            ルートを生成
-          </button>
+        <div className="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur border border-slate-200 rounded-xl shadow-sm px-3 py-1.5 text-xs text-slate-500">
+          {geocoded.length} 件表示中
+          {geocoded.length < withAddress.length && ` （${withAddress.length - geocoded.length} 件は住所不明）`}
+          <span className="ml-2 text-slate-400">· マーカーをクリックして選択</span>
         </div>
       )}
     </div>

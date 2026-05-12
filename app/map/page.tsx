@@ -2,26 +2,56 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { useCustomers } from "@/lib/CustomerContext";
 import { useAuth } from "@/lib/useAuth";
+import { Customer } from "@/lib/types";
 
 const CustomersMap = dynamic(() => import("@/components/CustomersMap"), { ssr: false });
+
+function displayName(c: Customer) {
+  return [c.lastName, c.firstName].filter(Boolean).join(" ");
+}
 
 function MapInner() {
   const { customers, loading } = useCustomers();
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  function handleGenerateRoute(ids: string[]) {
-    router.push(`/?selected=${encodeURIComponent(ids.join(","))}`);
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   }
+
+  function removeSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelected(new Set());
+  }
+
+  function handleGenerateRoute() {
+    router.push(`/?selected=${encodeURIComponent([...selected].join(","))}`);
+  }
+
+  const selectedCustomers = customers.filter((c) => selected.has(c.id));
 
   return (
     <div className="h-screen flex flex-col bg-slate-50">
-      <header className="bg-slate-900 text-white px-6 py-0">
-        <div className="max-w-7xl mx-auto flex items-center h-14 gap-4">
+      {/* Header */}
+      <header className="bg-slate-900 text-white px-6 py-0 shrink-0">
+        <div className="max-w-full flex items-center h-14 gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -64,33 +94,96 @@ function MapInner() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col min-h-0">
-        {loading ? (
-          <div className="flex-1 flex items-center justify-center text-slate-400 text-sm gap-2">
-            <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            顧客データを読み込み中…
-          </div>
-        ) : customers.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-            <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-              <svg className="w-7 h-7 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+      {/* Body */}
+      <div className="flex-1 flex min-h-0">
+        {/* Map */}
+        <div className="flex-1 relative min-w-0">
+          {loading ? (
+            <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm gap-2">
+              <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
+              顧客データを読み込み中…
             </div>
-            <p className="text-slate-500 text-sm mb-4">顧客データがありません</p>
-            <Link href="/" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
-              CSVをアップロードする
-            </Link>
-          </div>
-        ) : (
-          <div className="flex-1 relative">
-            <CustomersMap customers={customers} onGenerateRoute={handleGenerateRoute} />
+          ) : customers.length === 0 ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+              <p className="text-slate-500 text-sm mb-4">顧客データがありません</p>
+              <Link href="/" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
+                CSVをアップロードする
+              </Link>
+            </div>
+          ) : (
+            <CustomersMap
+              customers={customers}
+              selected={selected}
+              onToggle={toggleSelected}
+            />
+          )}
+        </div>
+
+        {/* Selection sidebar */}
+        {selected.size > 0 && (
+          <div className="w-72 shrink-0 bg-white border-l border-slate-200 flex flex-col shadow-lg">
+            {/* Sidebar header */}
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                </div>
+                <span className="text-sm font-semibold text-slate-800">{selected.size} 件選択中</span>
+              </div>
+              <button
+                onClick={clearSelection}
+                className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                全て解除
+              </button>
+            </div>
+
+            {/* Customer list */}
+            <div className="flex-1 overflow-y-auto py-2">
+              {selectedCustomers.map((c) => (
+                <div key={c.id} className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 group">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-800 truncate">{displayName(c)}</div>
+                    {c.company && (
+                      <div className="text-xs text-slate-400 truncate mt-0.5">{c.company}</div>
+                    )}
+                    {c.address && (
+                      <div className="text-xs text-slate-400 truncate mt-0.5">{c.address}</div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => removeSelected(c.id)}
+                    className="shrink-0 mt-0.5 w-5 h-5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
+                    title="選択を解除"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Generate route button */}
+            <div className="p-4 border-t border-slate-100">
+              <button
+                onClick={handleGenerateRoute}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+                </svg>
+                ルートを生成
+              </button>
+            </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
