@@ -12,7 +12,7 @@ export default function RouteResults({ result, start, onReset }: Props) {
   function openInGoogleMaps() {
     const origin = encodeURIComponent(start.address);
     const waypoints = result.stops.map((s) => encodeURIComponent(s.customer.address)).join("/");
-    const url = `https://www.google.com/maps/dir/${origin}/${waypoints}/${origin}`;
+    const url = `https://www.google.com/maps/dir/${origin}/${waypoints}`;
     window.open(url, "_blank");
   }
 
