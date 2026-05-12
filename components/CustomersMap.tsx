@@ -213,7 +213,6 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
         const marker = new Marker({
           position: pos,
           map: mapSnapshot,
-          title: `${c.lastName} ${c.firstName}`,
           zIndex: isSelected ? 10 : 1,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
@@ -225,19 +224,28 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
           },
         });
 
+        const infoContent = `
+          <div style="font-family:sans-serif;padding:4px 2px;min-width:180px">
+            <div style="font-weight:600;font-size:14px;margin-bottom:4px">
+              ${c.lastName} ${c.firstName}
+            </div>
+            ${c.company    ? `<div style="font-size:12px;color:#555;margin-bottom:2px">${c.company}</div>` : ""}
+            ${c.department ? `<div style="font-size:12px;color:#888;margin-bottom:2px">${c.department}</div>` : ""}
+            ${c.title      ? `<div style="font-size:12px;color:#888;margin-bottom:2px">${c.title}</div>` : ""}
+            ${c.address    ? `<div style="font-size:12px;color:#666;margin-top:4px;border-top:1px solid #eee;padding-top:4px">${c.address}</div>` : ""}
+            ${c.phone      ? `<div style="font-size:12px;color:#2563EB;margin-top:2px">${c.phone}</div>` : ""}
+            ${c.email      ? `<div style="font-size:12px;color:#2563EB;margin-top:2px">${c.email}</div>` : ""}
+          </div>`;
+
+        marker.addListener("mouseover", () => {
+          infoWindowRef.current?.setContent(infoContent);
+          infoWindowRef.current?.open(mapSnapshot, marker);
+        });
+        marker.addListener("mouseout", () => {
+          infoWindowRef.current?.close();
+        });
         marker.addListener("click", () => {
           onToggle(c.id);
-          infoWindowRef.current?.setContent(`
-            <div style="font-family:sans-serif;padding:4px 2px;min-width:180px">
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px">
-                ${c.lastName} ${c.firstName}
-              </div>
-              ${c.company ? `<div style="font-size:12px;color:#555;margin-bottom:2px">${c.company}</div>` : ""}
-              ${c.department ? `<div style="font-size:12px;color:#888;margin-bottom:2px">${c.department}</div>` : ""}
-              <div style="font-size:12px;color:#666;margin-top:4px;border-top:1px solid #eee;padding-top:4px">${c.address}</div>
-              ${c.phone ? `<div style="font-size:12px;color:#2563EB;margin-top:2px">${c.phone}</div>` : ""}
-            </div>`);
-          infoWindowRef.current?.open(mapSnapshot, marker);
         });
 
         markersRef.current.set(c.id, marker);
