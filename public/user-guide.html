@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Route Planner ユーザーガイド</title>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
+    color: #1e293b;
+    background: #fff;
+    line-height: 1.7;
+  }
+
+  /* ── Layout ── */
+  .page { max-width: 860px; margin: 0 auto; padding: 48px 40px; }
+
+  /* ── Cover page ── */
+  .cover {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; text-align: center; padding: 60px 40px;
+    background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 100%);
+    color: #fff;
+    page-break-after: always;
+  }
+  .cover-logo {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: #3b82f6; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 28px; box-shadow: 0 8px 32px rgba(59,130,246,.45);
+  }
+  .cover-logo svg { width: 42px; height: 42px; }
+  .cover h1 { font-size: 2.6rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 10px; }
+  .cover .subtitle { font-size: 1rem; color: rgba(255,255,255,.65); margin-bottom: 40px; }
+  .cover .meta { font-size: .8rem; color: rgba(255,255,255,.4); margin-top: auto; padding-top: 40px; }
+
+  /* ── TOC ── */
+  .toc-page { page-break-after: always; }
+  .toc-page h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; }
+  .toc ol { list-style: none; counter-reset: toc-counter; }
+  .toc > ol > li { counter-increment: toc-counter; margin-bottom: 6px; }
+  .toc > ol > li::before { content: counter(toc-counter) ". "; font-weight: 700; color: #3b82f6; }
+  .toc a { color: #1e293b; text-decoration: none; }
+  .toc a:hover { color: #3b82f6; }
+  .toc .toc-sub { list-style: none; padding-left: 20px; margin-top: 4px; }
+  .toc .toc-sub li { font-size: .88rem; color: #64748b; margin-bottom: 2px; }
+  .toc .toc-sub li::before { content: "– "; }
+
+  /* ── Section headers ── */
+  .section { page-break-before: always; }
+  .section:first-of-type { page-break-before: avoid; }
+  h2.section-title {
+    font-size: 1.5rem; font-weight: 800; color: #0f172a;
+    border-left: 5px solid #3b82f6; padding-left: 14px;
+    margin-bottom: 24px; margin-top: 0;
+  }
+  h3.subsection {
+    font-size: 1.05rem; font-weight: 700; color: #1e293b;
+    margin-top: 28px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  h3.subsection .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 6px;
+    background: #dbeafe; color: #1d4ed8; font-size: .7rem; font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  /* ── Paragraphs & lists ── */
+  p { margin-bottom: 10px; font-size: .93rem; }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { font-size: .93rem; margin-bottom: 4px; }
+
+  /* ── Steps ── */
+  .steps { list-style: none; padding: 0; margin-bottom: 16px; counter-reset: step-counter; }
+  .steps li {
+    counter-increment: step-counter;
+    display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start;
+  }
+  .steps li::before {
+    content: counter(step-counter);
+    min-width: 26px; height: 26px; border-radius: 50%;
+    background: #3b82f6; color: #fff;
+    font-size: .75rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .steps li .step-text { font-size: .93rem; }
+
+  /* ── Callout boxes ── */
+  .note, .tip, .warn {
+    border-radius: 10px; padding: 12px 16px; margin: 14px 0; font-size: .88rem;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .note  { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+  .tip   { background: #f0fdf4; border-left: 4px solid #22c55e; color: #166534; }
+  .warn  { background: #fff7ed; border-left: 4px solid #f97316; color: #9a3412; }
+  .note .icon, .tip .icon, .warn .icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── Inline UI labels ── */
+  .btn {
+    display: inline-block; background: #f1f5f9; border: 1px solid #cbd5e1;
+    border-radius: 6px; padding: 1px 8px; font-size: .83rem;
+    font-family: inherit; color: #334155; white-space: nowrap;
+  }
+  .btn-blue  { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+  .btn-red   { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+  .btn-green { background: #dcfce7; border-color: #86efac; color: #15803d; }
+
+  /* ── Screenshot placeholders ── */
+  .screenshot {
+    width: 100%; border: 2px dashed #cbd5e1; border-radius: 12px;
+    background: #f8fafc; margin: 16px 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 28px 20px; text-align: center; color: #94a3b8;
+    min-height: 180px;
+  }
+  .screenshot .sc-icon { font-size: 2.2rem; margin-bottom: 8px; }
+  .screenshot .sc-label { font-size: .82rem; font-weight: 600; color: #64748b; margin-bottom: 4px; }
+  .screenshot .sc-desc  { font-size: .77rem; color: #94a3b8; max-width: 420px; }
+
+  /* ── Feature table ── */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: .88rem; }
+  th { background: #f1f5f9; text-align: left; padding: 8px 12px; font-weight: 700; color: #475569; }
+  td { padding: 8px 12px; border-top: 1px solid #e2e8f0; vertical-align: top; }
+  tr:hover td { background: #f8fafc; }
+
+  /* ── Print rules ── */
+  @media print {
+    body { font-size: 13px; }
+    .cover { min-height: auto; padding: 80px 40px; }
+    .section { page-break-before: always; }
+    .screenshot { min-height: 160px; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     COVER PAGE
+     ══════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">
+    <svg fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/>
+    </svg>
+  </div>
+  <h1>Route Planner</h1>
+  <p class="subtitle">ユーザーガイド</p>
+  <p style="color:rgba(255,255,255,.5);font-size:.9rem;max-width:460px;line-height:1.8">
+    このガイドでは Route Planner の全機能（ログイン・顧客管理・地図表示・ルート生成・アカウント設定）を順に説明します。
+  </p>
+  <div class="meta">Route Planner &nbsp;·&nbsp; 2026年</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TABLE OF CONTENTS
+     ══════════════════════════════════════════ -->
+<div class="page toc-page">
+  <h2>目次</h2>
+  <nav class="toc">
+    <ol>
+      <li><a href="#s1">アプリの概要</a></li>
+      <li>
+        <a href="#s2">ログイン・アカウント作成</a>
+        <ul class="toc-sub">
+          <li>ログイン</li>
+          <li>新規アカウント作成</li>
+          <li>パスワードを忘れた場合</li>
+        </ul>
+      </li>
+      <li>
+        <a href="#s3">顧客一覧ページ</a>
+        <ul class="toc-sub">
+          <li>画面構成</li>
+          <li>CSVファイルのアップロード</li>
+          <li>顧客の検索・並び替え</li>
+          <li>顧客の選択</li>
+          <li>顧客情報の編集</li>
+          <li>顧客の削除（1件 / 複数件）</li>
+          <li>CSVエクスポート</li>
+          <li>ページネーション</li>
+        </ul>
+      </li>
+      <li>
+        <a href="#s4">顧客マップページ</a>
+        <ul class="toc-sub">
+          <li>地図の操作</li>
+          <li>マーカーの確認・選択</li>
+        </ul>
+      </li>
+      <li>
+        <a href="#s5">ルートの生成</a>
+        <ul class="toc-sub">
+          <li>出発地の設定</li>
+          <li>ルートの計算</li>
+          <li>結果の確認</li>
+        </ul>
+      </li>
+      <li>
+        <a href="#s6">アカウント設定</a>
+        <ul class="toc-sub">
+          <li>パスワードの変更</li>
+          <li>アカウントの削除</li>
+        </ul>
+      </li>
+    </ol>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 1 — OVERVIEW
+     ══════════════════════════════════════════ -->
+<div class="page section" id="s1">
+  <h2 class="section-title">1. アプリの概要</h2>
+
+  <p>
+    <strong>Route Planner</strong> は、営業担当者向けの顧客訪問ルート最適化アプリです。
+    CSVファイルで顧客データをインポートし、地図上で顧客を確認・選択したうえで、
+    Google Maps を使った最適ルートを自動生成します。
+  </p>
+
+  <div class="screenshot">
+    <div class="sc-icon">🗺️</div>
+    <div class="sc-label">スクリーンショット：アプリ全体像（顧客一覧 → マップ → ルート生成）</div>
+    <div class="sc-desc">ここにアプリのトップ画面またはフロー全体を示すスクリーンショットを挿入してください。</div>
+  </div>
+
+  <h3 class="subsection"><span class="badge">➤</span> 主な機能</h3>
+  <table>
+    <tr><th>機能</th><th>説明</th></tr>
+    <tr><td>顧客管理</td><td>CSVで顧客データをインポート。検索・編集・削除に対応。</td></tr>
+    <tr><td>地図表示</td><td>住所を自動ジオコーディングし、Google マップ上にピンを表示。</td></tr>
+    <tr><td>ルート生成</td><td>選択した顧客を巡る最適ルートを自動計算。距離・所要時間を表示。</td></tr>
+    <tr><td>アカウント</td><td>パスワード変更・アカウント削除に対応。</td></tr>
+  </table>
+
+  <h3 class="subsection"><span class="badge">➤</span> ページ構成</h3>
+  <table>
+    <tr><th>URL</th><th>ページ名</th></tr>
+    <tr><td><code>/login</code></td><td>ログイン・新規登録</td></tr>
+    <tr><td><code>/customers</code></td><td>顧客一覧（メイン画面）</td></tr>
+    <tr><td><code>/map</code></td><td>顧客マップ</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 2 — LOGIN
+     ══════════════════════════════════════════ -->
+<div class="page section" id="s2">
+  <h2 class="section-title">2. ログイン・アカウント作成</h2>
+
+  <div class="screenshot">
+    <div class="sc-icon">🔐</div>
+    <div class="sc-label">スクリーンショット：ログインページ全体</div>
+    <div class="sc-desc">ログイン・新規登録タブが切り替わる画面を撮影してください。</div>
+  </div>
+
+  <!-- 2-1 Login -->
+  <h3 class="subsection"><span class="badge">1</span> ログイン</h3>
+  <ol class="steps">
+    <li><div class="step-text">ブラウザでアプリの URL を開きます。ログインページが表示されます。</div></li>
+    <li><div class="step-text"><span class="btn">ログイン</span> タブが選択されていることを確認します。</div></li>
+    <li><div class="step-text">「メールアドレス」と「パスワード」を入力します。</div></li>
+    <li><div class="step-text"><span class="btn btn-blue">ログイン</span> ボタンをクリックします。</div></li>
+    <li><div class="step-text">ログインに成功すると、顧客一覧ページに移動します。</div></li>
+  </ol>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：ログインフォーム入力中</div>
+    <div class="sc-desc">メールとパスワードを入力した状態のフォームを撮影してください。</div>
+  </div>
+
+  <!-- 2-2 Sign up -->
+  <h3 class="subsection"><span class="badge">2</span> 新規アカウント作成</h3>
+  <ol class="steps">
+    <li><div class="step-text">ログインページで <span class="btn">新規登録</span> タブをクリックします。</div></li>
+    <li><div class="step-text">メールアドレスと 6文字以上のパスワードを入力します。</div></li>
+    <li><div class="step-text"><span class="btn btn-blue">アカウントを作成</span> ボタンをクリックします。</div></li>
+    <li><div class="step-text">「確認メールを送信しました」と表示されます。</div></li>
+    <li><div class="step-text">受信したメールの <strong>「Confirm your email」</strong> リンクをクリックしてアカウントを有効化します。</div></li>
+    <li><div class="step-text">「メールアドレスが確認されました」画面が表示されたら、<span class="btn btn-blue">ログインページへ</span> をクリックしてログインします。</div></li>
+  </ol>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：新規登録タブ＋確認メール送信後のメッセージ</div>
+    <div class="sc-desc">「確認メールを送信しました」メッセージが表示された状態を撮影してください。</div>
+  </div>
+
+  <div class="note"><span class="icon">ℹ️</span> 確認メールのリンクはアプリの本番 URL に向いています。ローカル環境（localhost）からアクセスしたい場合は管理者にお問い合わせください。</div>
+
+  <!-- 2-3 Forgot password -->
+  <h3 class="subsection"><span class="badge">3</span> パスワードを忘れた場合</h3>
+  <ol class="steps">
+    <li><div class="step-text">ログインページのパスワード欄の下にある <strong>「パスワードをお忘れですか？」</strong> をクリックします。</div></li>
+    <li><div class="step-text">登録済みのメールアドレスを入力します。</div></li>
+    <li><div class="step-text"><span class="btn btn-blue">リセットメールを送信</span> をクリックします。</div></li>
+    <li><div class="step-text">受信したメールのリンクをクリックすると「新しいパスワードを設定」画面が表示されます。</div></li>
+    <li><div class="step-text">新しいパスワード（8文字以上）を2回入力して <span class="btn btn-blue">パスワードを変更する</span> をクリックします。</div></li>
+    <li><div class="step-text">「パスワードを変更しました」と表示され、4秒後にログインページへ戻ります。</div></li>
+  </ol>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：パスワードリセット画面（メール入力）＋新パスワード設定画面</div>
+    <div class="sc-desc">「パスワードをリセット」フォームと、リンクを開いた後の「新しいパスワードを設定」フォームを撮影してください。</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 3 — CUSTOMER LIST
+     ══════════════════════════════════════════ -->
+<div class="page section" id="s3">
+  <h2 class="section-title">3. 顧客一覧ページ</h2>
+
+  <p>ログイン後に表示されるメイン画面です。顧客データの管理とルート計画がすべてここから行えます。</p>
+
+  <div class="screenshot">
+    <div class="sc-icon">📋</div>
+    <div class="sc-label">スクリーンショット：顧客一覧ページ全体</div>
+    <div class="sc-desc">顧客が数件表示されている状態のページ全体を撮影してください（ツールバー・テーブル・ページネーションが見えるように）。</div>
+  </div>
+
+  <!-- 3-1 Layout -->
+  <h3 class="subsection"><span class="badge">1</span> 画面構成</h3>
+  <table>
+    <tr><th>エリア</th><th>説明</th></tr>
+    <tr><td>ヘッダー</td><td>ナビゲーション、ログアウトボタン、アカウントメニュー</td></tr>
+    <tr><td>ツールバー</td><td>検索バー、CSVアップロード、エクスポート、ルート計画、削除ボタン</td></tr>
+    <tr><td>テーブル</td><td>顧客一覧。クリックで選択、チェックボックスで複数選択</td></tr>
+    <tr><td>ページネーション</td><td>表示件数の切り替え（10 / 20 / 50 / 100 / 全て）とページ移動</td></tr>
+  </table>
+
+  <!-- 3-2 CSV Upload -->
+  <h3 class="subsection"><span class="badge">2</span> CSVファイルのアップロード</h3>
+  <p>顧客データは CSV ファイルで一括登録します。同一人物（氏名＋会社名が一致）は重複登録されません。</p>
+  <ol class="steps">
+    <li><div class="step-text">ツールバーの <span class="btn">↑ CSV</span> ボタンをクリックします。</div></li>
+    <li><div class="step-text">ファイル選択パネルが開きます。CSV ファイルをドラッグ&amp;ドロップするか、クリックしてファイルを選択します。</div></li>
+    <li><div class="step-text">「N件追加、M件スキップ」というメッセージが表示され、テーブルが更新されます。</div></li>
+  </ol>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：CSVアップロードパネル展開時</div>
+    <div class="sc-desc">CSV アップロードパネルが開いた状態を撮影してください。</div>
+  </div>
+
+  <div class="tip"><span class="icon">✅</span> <strong>CSVフォーマット：</strong>1行目はヘッダー行。列の順番は問いません。対応フィールド：氏名・会社名・部署・役職・メールアドレス・電話番号・住所</div>
+
+  <!-- 3-3 Search & Sort -->
+  <h3 class="subsection"><span class="badge">3</span> 顧客の検索・並び替え</h3>
+  <p><strong>検索：</strong>ツールバーの検索ボックスにキーワードを入力すると、氏名・会社名・部署・役職・住所・メール・電話番号をリアルタイムで絞り込みます。</p>
+  <p><strong>並び替え：</strong>テーブルの列ヘッダー（氏名 / 会社名 / 部署 / 役職 / 住所）をクリックすると昇順・降順が切り替わります。</p>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：検索キーワード入力中</div>
+    <div class="sc-desc">検索ボックスに文字が入力され、テーブルが絞り込まれた状態を撮影してください。</div>
+  </div>
+
+  <!-- 3-4 Selection -->
+  <h3 class="subsection"><span class="badge">4</span> 顧客の選択</h3>
+  <p>ルート計画や一括削除を行うには、先に対象の顧客を選択します。</p>
+  <table>
+    <tr><th>操作</th><th>方法</th></tr>
+    <tr><td>1件選択</td><td>行の左端のチェックボックスをクリック</td></tr>
+    <tr><td>全件選択</td><td>テーブルヘッダーのチェックボックスをクリック</td></tr>
+    <tr><td>選択解除</td><td>同じチェックボックスを再度クリック</td></tr>
+  </table>
+  <p>選択中は件数が「<strong>N件選択中</strong>」と表示され、<span class="btn btn-red">削除</span> と <span class="btn btn-blue">ルートを計画</span> ボタンがアクティブになります。</p>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：複数顧客を選択した状態</div>
+    <div class="sc-desc">チェックボックスがONになった行と、ツールバーの削除・ルート計画ボタンが表示された状態を撮影してください。</div>
+  </div>
+
+  <!-- 3-5 Edit -->
+  <h3 class="subsection"><span class="badge">5</span> 顧客情報の編集</h3>
+  <ol class="steps">
+    <li><div class="step-text">編集したい顧客の行にマウスを重ねると、右端に <span class="btn">✏️</span> （鉛筆アイコン）が表示されます。</div></li>
+    <li><div class="step-text">鉛筆アイコンをクリックすると編集モーダルが開きます。</div></li>
+    <li><div class="step-text">氏名・会社名・部署・役職・メールアドレス・電話番号・住所を編集します。</div></li>
+    <li><div class="step-text"><span class="btn btn-blue">保存</span> をクリックして変更を確定します。</div></li>
+  </ol>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：顧客編集モーダル</div>
+    <div class="sc-desc">編集モーダルが開き、各フィールドが入力できる状態を撮影してください。</div>
+  </div>
+
+  <!-- 3-6 Delete -->
+  <h3 class="subsection"><span class="badge">6</span> 顧客の削除</h3>
+  <p><strong>1件削除：</strong>行にマウスを重ねると右端に <span class="btn btn-red">🗑️</span>（ゴミ箱アイコン）が表示されます。クリックすると即座に削除されます。</p>
+  <p><strong>複数件削除：</strong></p>
+  <ol class="steps">
+    <li><div class="step-text">削除したい顧客のチェックボックスをオンにします。</div></li>
+    <li><div class="step-text">ツールバーに <span class="btn btn-red">削除（N件）</span> ボタンが表示されるのでクリックします。</div></li>
+    <li><div class="step-text">確認ダイアログで件数を確認し、<span class="btn btn-red">削除する</span> をクリックします。</div></li>
+  </ol>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：一括削除の確認ダイアログ</div>
+    <div class="sc-desc">「N件の顧客データを削除します」という確認ダイアログを撮影してください。</div>
+  </div>
+
+  <div class="warn"><span class="icon">⚠️</span> 削除した顧客データは復元できません。操作前に必ずご確認ください。</div>
+
+  <!-- 3-7 Export -->
+  <h3 class="subsection"><span class="badge">7</span> CSVエクスポート</h3>
+  <p>ツールバーの <span class="btn">↓ エクスポート</span> ボタンをクリックすると、現在表示中の顧客データ（選択中の場合は選択分のみ）を CSV ファイルとしてダウンロードします。</p>
+
+  <!-- 3-8 Pagination -->
+  <h3 class="subsection"><span class="badge">8</span> ページネーション</h3>
+  <p>テーブル下部のページネーションバーで表示件数とページを切り替えられます。</p>
+  <table>
+    <tr><th>操作</th><th>方法</th></tr>
+    <tr><td>表示件数変更</td><td>右側の <span class="btn">10</span> <span class="btn">20</span> <span class="btn">50</span> <span class="btn">100</span> <span class="btn">全て</span> ボタンをクリック</td></tr>
+    <tr><td>ページ移動</td><td>左側のページ番号ボタンをクリック（多い場合は「…」で省略）</td></tr>
+  </table>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：ページネーションバー</div>
+    <div class="sc-desc">ページネーションバー（ページ番号＋件数切り替えボタン）を撮影してください。</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 4 — MAP
+     ══════════════════════════════════════════ -->
+<div class="page section" id="s4">
+  <h2 class="section-title">4. 顧客マップページ</h2>
+
+  <p>顧客の住所をジオコーディングして Google マップ上に表示します。地図上から顧客を選択してルートを計画することもできます。</p>
+
+  <div class="screenshot">
+    <div class="sc-icon">🗺️</div>
+    <div class="sc-label">スクリーンショット：顧客マップページ全体</div>
+    <div class="sc-desc">青いピンが地図上に表示されている状態のページ全体を撮影してください。</div>
+  </div>
+
+  <!-- 4-1 Map operation -->
+  <h3 class="subsection"><span class="badge">1</span> 地図の操作</h3>
+  <table>
+    <tr><th>操作</th><th>方法</th></tr>
+    <tr><td>移動</td><td>地図をドラッグ</td></tr>
+    <tr><td>ズームイン/アウト</td><td>マウスホイール、またはマップ右下の ＋/－ ボタン</td></tr>
+    <tr><td>地図表示の保存</td><td>移動・ズーム操作後に自動保存。次回開いたとき同じ位置が表示されます。</td></tr>
+  </table>
+
+  <div class="tip"><span class="icon">✅</span> 初回表示時は顧客住所に合わせて自動的に地図が調整されます。2回目以降は最後に表示した位置・ズームが復元されます。</div>
+
+  <!-- 4-2 Markers -->
+  <h3 class="subsection"><span class="badge">2</span> マーカーの確認・選択</h3>
+  <table>
+    <tr><th>操作</th><th>説明</th></tr>
+    <tr><td>マーカーにホバー</td><td>顧客の氏名・会社名・部署・役職・住所・電話番号・メールが吹き出しで表示されます。</td></tr>
+    <tr><td>マーカーをクリック</td><td>顧客を選択（オレンジに変化）。再クリックで選択解除。</td></tr>
+    <tr><td>選択済みマーカー</td><td>オレンジ色の大きなピンで表示されます。</td></tr>
+  </table>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：マーカーホバー時の吹き出し</div>
+    <div class="sc-desc">マーカーにマウスを重ねたときに顧客情報が吹き出しで表示された状態を撮影してください。</div>
+  </div>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：複数選択後のサイドパネル（PC）/ ボトムシート（モバイル）</div>
+    <div class="sc-desc">複数のマーカーを選択した後、右側パネルに選択顧客の一覧と「ルートを生成」ボタンが表示された状態を撮影してください。</div>
+  </div>
+
+  <h3 class="subsection"><span class="badge">3</span> マップからルート計画へ</h3>
+  <ol class="steps">
+    <li><div class="step-text">地図上のマーカーをクリックして訪問したい顧客を選択します（オレンジ色に変わります）。</div></li>
+    <li><div class="step-text">右側（PC）またはボトムシート（スマートフォン）に選択リストと件数が表示されます。</div></li>
+    <li><div class="step-text"><span class="btn btn-blue">ルートを生成</span> ボタンをクリックします。</div></li>
+    <li><div class="step-text">顧客一覧ページの「出発地設定」画面に移動します。</div></li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 5 — ROUTE PLANNING
+     ══════════════════════════════════════════ -->
+<div class="page section" id="s5">
+  <h2 class="section-title">5. ルートの生成</h2>
+
+  <p>選択した顧客を効率よく巡るルートを Google Maps の経路最適化機能を使って自動計算します。</p>
+
+  <!-- 5-1 Start location -->
+  <h3 class="subsection"><span class="badge">1</span> 出発地の設定</h3>
+  <p>顧客一覧でルート対象の顧客を選択し <span class="btn btn-blue">ルートを計画</span> ボタンをクリックすると出発地設定画面が表示されます。</p>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：出発地設定画面</div>
+    <div class="sc-desc">出発地名と住所の入力フォームが表示された画面を撮影してください。</div>
+  </div>
+
+  <ol class="steps">
+    <li><div class="step-text">「出発地名」欄に任意の名前（例：本社、自宅）を入力します。</div></li>
+    <li><div class="step-text">「住所」欄に出発地の住所を入力します。</div></li>
+    <li><div class="step-text"><span class="btn btn-blue">この住所でルートを計算する</span> ボタンをクリックします。</div></li>
+  </ol>
+
+  <div class="note"><span class="icon">ℹ️</span> 住所は日本語でも英語でも入力できます。都市名のみでも認識されますが、番地まで入力するとより正確です。</div>
+
+  <!-- 5-2 Calculating -->
+  <h3 class="subsection"><span class="badge">2</span> ルートの計算</h3>
+  <p>住所を確定すると自動的にルート計算が始まります。</p>
+  <ol class="steps">
+    <li><div class="step-text">「住所をジオコーディング中…」のプログレスバーが表示されます。</div></li>
+    <li><div class="step-text">続いて「最適ルートを計算中…」が表示されます。</div></li>
+    <li><div class="step-text">計算完了後、自動的に結果画面に切り替わります。</div></li>
+  </ol>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：ルート計算中のプログレス表示</div>
+    <div class="sc-desc">「最適ルートを計算中…」のスピナーが表示された状態を撮影してください。</div>
+  </div>
+
+  <!-- 5-3 Result -->
+  <h3 class="subsection"><span class="badge">3</span> 結果の確認</h3>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：ルート結果画面（マップ＋訪問順リスト）</div>
+    <div class="sc-desc">地図上にルートが青い線で描かれ、右側（PC）または下部（スマートフォン）に訪問順リストが表示された状態を撮影してください。</div>
+  </div>
+
+  <p>結果画面では以下の情報が確認できます。</p>
+  <table>
+    <tr><th>情報</th><th>説明</th></tr>
+    <tr><td>訪問順リスト</td><td>最適化された訪問順序（番号付き）、各区間の距離と所要時間</td></tr>
+    <tr><td>総移動距離</td><td>出発地から全顧客を回る合計距離</td></tr>
+    <tr><td>総所要時間</td><td>運転のみの合計時間（滞在時間は含まない）</td></tr>
+    <tr><td>地図ルート</td><td>青い線で出発地 → 各顧客の経路を表示（往路のみ）</td></tr>
+  </table>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：訪問順リストの拡大</div>
+    <div class="sc-desc">各訪問先の番号・氏名・会社名・区間距離・区間時間が並んだリストを撮影してください。</div>
+  </div>
+
+  <h3 class="subsection"><span class="badge">4</span> Google マップで開く</h3>
+  <p>結果画面の <span class="btn btn-green">Google マップで開く</span> ボタンをクリックすると、同じルートが Google マップアプリまたはブラウザ版 Google マップで開きます。スマートフォンからナビとして利用できます。</p>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：「Google マップで開く」ボタン</div>
+    <div class="sc-desc">ボタンが表示されている箇所を撮影してください。</div>
+  </div>
+
+  <div class="tip"><span class="icon">✅</span> 最大 25件の顧客が1回のルート計算に含まれます。25件を超える場合は先頭25件で計算されます。</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 6 — ACCOUNT SETTINGS
+     ══════════════════════════════════════════ -->
+<div class="page section" id="s6">
+  <h2 class="section-title">6. アカウント設定</h2>
+
+  <p>ヘッダー右端のアイコンからアカウントに関する操作が行えます。</p>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：ヘッダー右端のアイコン群</div>
+    <div class="sc-desc">鍵アイコン・人物削除アイコン・ログアウトアイコンが並んだヘッダー右端を撮影してください。</div>
+  </div>
+
+  <!-- 6-1 Change password -->
+  <h3 class="subsection"><span class="badge">1</span> パスワードの変更</h3>
+  <ol class="steps">
+    <li><div class="step-text">ヘッダー右端の 🔑（鍵アイコン）をクリックします。</div></li>
+    <li><div class="step-text">「パスワード変更」モーダルが開きます。</div></li>
+    <li><div class="step-text">新しいパスワード（8文字以上）を「新しいパスワード」欄と「パスワード確認」欄に入力します。</div></li>
+    <li><div class="step-text"><span class="btn btn-blue">変更する</span> をクリックします。</div></li>
+    <li><div class="step-text">「パスワードを変更しました」と表示されたら完了です。</div></li>
+  </ol>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：パスワード変更モーダル</div>
+    <div class="sc-desc">パスワード変更モーダルが開いた状態を撮影してください。</div>
+  </div>
+
+  <!-- 6-2 Delete account -->
+  <h3 class="subsection"><span class="badge">2</span> アカウントの削除</h3>
+  <p>アカウントを削除するとすべての顧客データが完全に削除されます。この操作は取り消せません。</p>
+
+  <ol class="steps">
+    <li><div class="step-text">ヘッダー右端の 👤（人物削除アイコン）をクリックします。</div></li>
+    <li><div class="step-text">「アカウント削除」モーダルが開きます。</div></li>
+    <li><div class="step-text">確認のため入力欄に <strong><code>DELETE</code></strong> と入力します。</div></li>
+    <li><div class="step-text"><span class="btn btn-red">削除する</span> ボタンが有効になるのでクリックします。</div></li>
+    <li><div class="step-text">アカウントと全データが削除され、ログインページへ移動します。</div></li>
+  </ol>
+
+  <div class="screenshot">
+    <div class="sc-icon">📸</div>
+    <div class="sc-label">スクリーンショット：アカウント削除モーダル（DELETE 入力後）</div>
+    <div class="sc-desc">入力欄に「DELETE」と入力され、「削除する」ボタンが赤くアクティブになった状態を撮影してください。</div>
+  </div>
+
+  <div class="warn"><span class="icon">⚠️</span> アカウント削除は取り消せません。顧客データのエクスポートが必要な場合は、削除前に CSVエクスポートを行ってください。</div>
+
+  <!-- 6-3 Logout -->
+  <h3 class="subsection"><span class="badge">3</span> ログアウト</h3>
+  <p>ヘッダー右端の <span class="btn">→ ログアウト</span> ボタンをクリックするとログアウトしてログインページに移動します。</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     BACK COVER
+     ══════════════════════════════════════════ -->
+<div class="cover" style="page-break-before:always;min-height:auto;padding:80px 40px;">
+  <div class="cover-logo">
+    <svg fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c-.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/>
+    </svg>
+  </div>
+  <h1 style="font-size:1.8rem">Route Planner</h1>
+  <p style="color:rgba(255,255,255,.5);font-size:.9rem;margin-top:8px">ユーザーガイド</p>
+</div>
+
+</body>
+</html>
