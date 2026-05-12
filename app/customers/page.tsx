@@ -153,6 +153,9 @@ function CustomersInner() {
                 <span className="ml-1.5 bg-white/20 text-white/80 text-[10px] px-1.5 py-0.5 rounded-full">{customers.length}</span>
               )}
             </span>
+            <Link href="/map" className="px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors">
+              顧客マップ
+            </Link>
           </nav>
 
           <div className="ml-auto flex items-center gap-2 border-l border-white/10 pl-3">
