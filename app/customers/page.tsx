@@ -151,8 +151,8 @@ function CustomersInner() {
     if (!editTarget) return;
     const fd = new FormData(e.currentTarget);
     const fields = {
-      lastName:   (fd.get("lastName")   as string).trim(),
-      firstName:  (fd.get("firstName")  as string).trim(),
+      lastName:   (fd.get("fullName")   as string).trim(),
+      firstName:  "",
       company:    (fd.get("company")    as string).trim(),
       department: (fd.get("department") as string).trim(),
       title:      (fd.get("title")      as string).trim(),
@@ -619,17 +619,10 @@ function CustomersInner() {
             </div>
 
             <form onSubmit={handleSaveEdit} className="px-6 py-5 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">姓</label>
-                  <input name="lastName" defaultValue={editTarget.lastName}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">名</label>
-                  <input name="firstName" defaultValue={editTarget.firstName}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">氏名</label>
+                <input name="fullName" defaultValue={displayName(editTarget)}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">会社名</label>
