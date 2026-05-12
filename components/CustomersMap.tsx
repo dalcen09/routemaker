@@ -18,6 +18,22 @@ interface Props {
   onToggle: (id: string) => void;
 }
 
+// localStorage cache: { [customerId]: { lat, lng, address } }
+const CACHE_KEY = "rp_geocache_v1";
+
+interface CacheEntry { lat: number; lng: number; address: string }
+type GeoCache = Record<string, CacheEntry>;
+
+function loadCache(): GeoCache {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY) ?? "{}"); }
+  catch { return {}; }
+}
+
+function saveCache(cache: GeoCache) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); }
+  catch { /* storage full – ignore */ }
+}
+
 export default function CustomersMap({ customers, selected, onToggle }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -47,20 +63,37 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
     });
   }, [selected]);
 
-  // Geocode all customers in batches of 8
+  // Geocode all customers, using localStorage cache to avoid repeat API calls
   useEffect(() => {
     if (withAddress.length === 0) return;
     let cancelled = false;
 
     async function geocodeAll() {
-      setGeocoding(true);
-      setProgress({ done: 0, total: withAddress.length });
-      setGeocoded([]);
-      const BATCH = 8;
+      const cache = loadCache();
 
-      for (let i = 0; i < withAddress.length; i += BATCH) {
+      // Serve cached entries immediately
+      const fromCache: GeoCustomer[] = [];
+      const toFetch: Customer[] = [];
+
+      for (const c of withAddress) {
+        const hit = cache[c.id];
+        if (hit && hit.address === c.address) {
+          fromCache.push({ ...c, lat: hit.lat, lng: hit.lng });
+        } else {
+          toFetch.push(c);
+        }
+      }
+
+      setGeocoded(fromCache);
+      if (toFetch.length === 0) { setGeocoding(false); return; }
+
+      setGeocoding(true);
+      setProgress({ done: fromCache.length, total: withAddress.length });
+
+      const BATCH = 8;
+      for (let i = 0; i < toFetch.length; i += BATCH) {
         if (cancelled) break;
-        const batch = withAddress.slice(i, i + BATCH);
+        const batch = toFetch.slice(i, i + BATCH);
         const results = await Promise.all(
           batch.map(async (c) => {
             try {
@@ -81,6 +114,12 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
 
         if (cancelled) break;
         const valid = results.filter(Boolean) as GeoCustomer[];
+
+        // Persist new results to cache
+        const updatedCache = loadCache();
+        valid.forEach((gc) => { updatedCache[gc.id] = { lat: gc.lat, lng: gc.lng, address: gc.address }; });
+        saveCache(updatedCache);
+
         setGeocoded((prev) => [...prev, ...valid]);
         setProgress((p) => ({ ...p, done: Math.min(p.done + BATCH, withAddress.length) }));
       }
