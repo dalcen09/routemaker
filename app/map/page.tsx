@@ -42,7 +42,7 @@ function MapInner() {
   }
 
   function handleGenerateRoute() {
-    router.push(`/?selected=${encodeURIComponent([...selected].join(","))}`);
+    router.push(`/customers?selected=${encodeURIComponent([...selected].join(","))}`);
   }
 
   const selectedCustomers = customers.filter((c) => selected.has(c.id));

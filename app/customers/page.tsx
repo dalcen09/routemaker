@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import CsvUploader from "@/components/CsvUploader";
 import StartLocationInput from "@/components/StartLocationInput";
@@ -46,6 +47,7 @@ function CustomersInner() {
   const { customers, loading, saving, mergeFromCsv, deleteCustomer } = useCustomers();
   const { user, signOut } = useAuth();
   const { state, progress, result, error, plan, reset } = usePlanner();
+  const searchParams = useSearchParams();
 
   const [mode, setMode] = useState<Mode>("list");
   const [search, setSearch] = useState("");
@@ -125,6 +127,21 @@ function CustomersInner() {
     setStart(null);
     setSelected(new Set());
   }
+
+  // Pre-select customers coming from the map page (?selected=id1,id2,...)
+  useEffect(() => {
+    if (loading || customers.length === 0) return;
+    const param = searchParams.get("selected");
+    if (!param) return;
+    const ids = new Set(param.split(",").filter(Boolean));
+    const valid = new Set([...ids].filter((id) => customers.some((c) => c.id === id)));
+    if (valid.size > 0) {
+      setSelected(valid);
+      setMode("start");
+    }
+  // Run once after customers first load
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, customers.length]);
 
   // Automatically transition mode based on planner state
   useEffect(() => {
@@ -491,7 +508,9 @@ function CustomersInner() {
 export default function CustomersPage() {
   return (
     <AppShell>
-      <CustomersInner />
+      <Suspense>
+        <CustomersInner />
+      </Suspense>
     </AppShell>
   );
 }
