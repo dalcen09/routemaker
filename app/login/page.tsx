@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-type Mode = "login" | "signup";
+type Mode = "login" | "signup" | "forgot";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) { setError(error.message); return; }
         router.push("/");
-      } else {
+      } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -34,6 +34,11 @@ export default function LoginPage() {
         });
         if (error) { setError(error.message); return; }
         setMessage("確認メールを送信しました。メールのリンクをクリックしてアカウントを有効化してください。");
+      } else {
+        const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? window.location.origin}/auth/reset-password`;
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+        if (error) { setError(error.message); return; }
+        setMessage("パスワードリセットメールを送信しました。メールのリンクをクリックして新しいパスワードを設定してください。");
       }
     } finally {
       setLoading(false);
@@ -66,32 +71,36 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-slate-900">
-              {mode === "login" ? "ログイン" : "アカウント作成"}
+              {mode === "login" ? "ログイン" : mode === "signup" ? "アカウント作成" : "パスワードをリセット"}
             </h1>
             <p className="text-sm text-slate-500 mt-1">
               {mode === "login"
                 ? "アカウントにログインしてください"
-                : "新しいアカウントを作成します"}
+                : mode === "signup"
+                ? "新しいアカウントを作成します"
+                : "登録済みのメールアドレスを入力してください"}
             </p>
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            {/* Mode toggle */}
-            <div className="flex rounded-xl bg-slate-100 p-1 mb-6">
-              {(["login", "signup"] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => { setMode(m); setError(null); setMessage(null); }}
-                  className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                    mode === m
-                      ? "bg-white text-slate-900 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  {m === "login" ? "ログイン" : "新規登録"}
-                </button>
-              ))}
-            </div>
+            {/* Mode toggle — hidden in forgot mode */}
+            {mode !== "forgot" && (
+              <div className="flex rounded-xl bg-slate-100 p-1 mb-6">
+                {(["login", "signup"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => { setMode(m); setError(null); setMessage(null); }}
+                    className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                      mode === m
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    {m === "login" ? "ログイン" : "新規登録"}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -107,20 +116,31 @@ export default function LoginPage() {
                   className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  パスワード
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  placeholder="6文字以上"
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                />
-              </div>
+              {mode !== "forgot" && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    パスワード
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="6文字以上"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  />
+                  {mode === "login" && (
+                    <button
+                      type="button"
+                      onClick={() => { setMode("forgot"); setError(null); setMessage(null); }}
+                      className="mt-1.5 text-xs text-blue-500 hover:text-blue-700 transition-colors"
+                    >
+                      パスワードをお忘れですか？
+                    </button>
+                  )}
+                </div>
+              )}
 
               {error && (
                 <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
@@ -146,9 +166,19 @@ export default function LoginPage() {
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl text-sm transition-colors shadow-sm mt-2"
               >
                 {loading
-                  ? (mode === "login" ? "ログイン中…" : "登録中…")
-                  : (mode === "login" ? "ログイン" : "アカウントを作成")}
+                  ? (mode === "forgot" ? "送信中…" : mode === "login" ? "ログイン中…" : "登録中…")
+                  : (mode === "forgot" ? "リセットメールを送信" : mode === "login" ? "ログイン" : "アカウントを作成")}
               </button>
+
+              {mode === "forgot" && (
+                <button
+                  type="button"
+                  onClick={() => { setMode("login"); setError(null); setMessage(null); }}
+                  className="w-full text-sm text-slate-500 hover:text-slate-700 transition-colors pt-1"
+                >
+                  ← ログインに戻る
+                </button>
+              )}
             </form>
           </div>
         </div>
