@@ -188,8 +188,8 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
         style.id = "rp-iw-style";
         style.textContent = `
           .gm-ui-hover-effect { display: none !important; }
-          .gm-style-iw-c { padding-top: 6px !important; }
-          .gm-style-iw-d { overflow: hidden !important; }
+          .gm-style-iw-c { padding: 12px !important; }
+          .gm-style-iw-d { overflow: hidden !important; padding: 0 !important; }
         `;
         document.head.appendChild(style);
       }
@@ -237,7 +237,7 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
         });
 
         const infoContent = `
-          <div style="font-family:sans-serif;padding:4px 2px;min-width:180px">
+          <div style="font-family:sans-serif;min-width:180px">
             <div style="font-weight:600;font-size:14px;margin-bottom:4px">
               ${c.lastName} ${c.firstName}
             </div>
