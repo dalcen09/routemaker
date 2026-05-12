@@ -211,7 +211,7 @@ function CustomersInner() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="h-screen flex flex-col bg-slate-50">
       {/* Header */}
       <header className="bg-slate-900 text-white px-4 sm:px-6 py-0">
         <div className="max-w-7xl mx-auto flex items-center h-14 gap-2 sm:gap-4">
@@ -249,7 +249,7 @@ function CustomersInner() {
 
       {/* ── LIST MODE ── */}
       {mode === "list" && (
-        <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
+        <main className="flex-1 max-w-7xl mx-auto w-full px-4 pt-6 pb-0 flex flex-col min-h-0 overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-24 text-slate-400 text-sm gap-2">
               <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
@@ -259,9 +259,9 @@ function CustomersInner() {
               読み込み中…
             </div>
           ) : (
-            <>
+            <div className="flex-1 flex flex-col min-h-0">
               {/* Toolbar */}
-              <div className="mb-4 space-y-3">
+              <div className="mb-4 space-y-3 shrink-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <div>
                     <h1 className="text-lg font-semibold text-slate-900">顧客一覧</h1>
@@ -332,7 +332,7 @@ function CustomersInner() {
                   <p className="text-sm text-slate-400 mb-4">CSVボタンからアップロードしてください</p>
                 </div>
               ) : (
-                <>
+                <div className="flex-1 flex flex-col min-h-0">
                   {/* Mobile cards */}
                   <div className="md:hidden space-y-2 pb-4">
                     {sorted.length === 0 ? (
@@ -396,8 +396,8 @@ function CustomersInner() {
                   </div>
 
                   {/* Desktop table */}
-                  <div className="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto">
+                  <div className="hidden md:flex flex-col flex-1 min-h-0 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="overflow-auto flex-1 min-h-0">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-slate-200 bg-slate-50">
@@ -518,9 +518,9 @@ function CustomersInner() {
                       </span>
                     </div>
                   </div>
-                </>
+                </div>
               )}
-            </>
+            </div>
           )}
         </main>
       )}
