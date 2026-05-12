@@ -13,7 +13,7 @@ function MapInner() {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="h-screen flex flex-col bg-slate-50">
       <header className="bg-slate-900 text-white px-6 py-0">
         <div className="max-w-7xl mx-auto flex items-center h-14 gap-4">
           <div className="flex items-center gap-2.5">
@@ -58,7 +58,7 @@ function MapInner() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col min-h-0">
         {loading ? (
           <div className="flex-1 flex items-center justify-center text-slate-400 text-sm gap-2">
             <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">

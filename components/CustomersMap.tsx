@@ -156,8 +156,8 @@ export default function CustomersMap({ customers }: Props) {
   const pct = progress.total ? Math.round((progress.done / progress.total) * 100) : 0;
 
   return (
-    <div className="relative w-full h-full">
-      <div ref={mapRef} className="w-full h-full" />
+    <div className="relative w-full h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
+      <div ref={mapRef} className="absolute inset-0" />
 
       {/* Progress overlay */}
       {geocoding && (
