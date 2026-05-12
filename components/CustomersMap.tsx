@@ -188,6 +188,7 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
         style.id = "rp-iw-style";
         style.textContent = `
           .gm-ui-hover-effect { display: none !important; }
+          .gm-style-iw-chr { display: none !important; }
           .gm-style-iw-c { padding: 12px !important; }
           .gm-style-iw-d { overflow: hidden !important; padding: 0 !important; }
         `;
