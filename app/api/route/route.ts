@@ -6,12 +6,9 @@ interface RouteRequest {
   customers: Customer[];
 }
 
-// Japan bounding box — reject geocoding results wildly outside Japan
-const JP = { latMin: 24, latMax: 46, lngMin: 122, lngMax: 147 };
-
 function validCoord(lat: number | undefined, lng: number | undefined): boolean {
-  if (!lat || !lng || isNaN(lat) || isNaN(lng)) return false;
-  return lat >= JP.latMin && lat <= JP.latMax && lng >= JP.lngMin && lng <= JP.lngMax;
+  if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) return false;
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 && !(lat === 0 && lng === 0);
 }
 
 async function callDirections(origin: string, destination: string, waypoints: string[], optimize: boolean, apiKey: string) {
