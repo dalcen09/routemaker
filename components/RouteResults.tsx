@@ -105,18 +105,6 @@ export default function RouteResults({ result, start, onReset }: Props) {
               </div>
             ))}
 
-            {/* Return */}
-            <div className="relative flex items-center gap-3 py-2">
-              <div className="w-8 h-8 rounded-full bg-slate-400 border-2 border-white shadow-sm text-white text-xs font-bold flex items-center justify-center shrink-0 z-10">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <div className="text-xs font-semibold text-slate-500">帰還</div>
-                <div className="text-xs text-slate-400 truncate mt-0.5">{start.address}</div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
