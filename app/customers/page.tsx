@@ -57,6 +57,8 @@ function CustomersInner() {
   const [start, setStart] = useState<StartLocation | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [mergeResult, setMergeResult] = useState<{ added: number; skipped: number } | null>(null);
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -81,9 +83,23 @@ function CustomersInner() {
     });
   }, [filtered, sortKey, sortDir]);
 
+  const totalPages = pageSize === 0 ? 1 : Math.max(1, Math.ceil(sorted.length / pageSize));
+  const paged = pageSize === 0 ? sorted : sorted.slice((page - 1) * pageSize, page * pageSize);
+
   function handleSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
+    setPage(1);
+  }
+
+  function handleSearch(q: string) {
+    setSearch(q);
+    setPage(1);
+  }
+
+  function handlePageSize(size: number) {
+    setPageSize(size);
+    setPage(1);
   }
 
   function toggleRow(id: string) {
@@ -275,7 +291,7 @@ function CustomersInner() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                   </svg>
                   <input type="text" placeholder="氏名・会社・住所・メール・電話で検索" value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e) => handleSearch(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
                 </div>
               </div>
@@ -296,7 +312,7 @@ function CustomersInner() {
                   <div className="md:hidden space-y-2 pb-4">
                     {sorted.length === 0 ? (
                       <div className="py-12 text-center text-slate-400 text-sm">該当する顧客が見つかりません</div>
-                    ) : sorted.map((customer) => (
+                    ) : paged.map((customer) => (
                       <div key={customer.id}
                         className={`bg-white rounded-xl border p-4 shadow-sm cursor-pointer transition-colors ${selected.has(customer.id) ? "border-blue-400 bg-blue-50" : "border-slate-200"}`}
                         onClick={() => toggleRow(customer.id)}>
@@ -325,6 +341,25 @@ function CustomersInner() {
                     {selectedCount > 0 && (
                       <button onClick={() => setSelected(new Set())} className="text-xs text-blue-500 hover:text-blue-700 transition-colors">選択を解除</button>
                     )}
+                    {/* Mobile pagination */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-500">
+                      <span>表示:</span>
+                      {([10, 20, 50, 100, 0] as const).map((n) => (
+                        <button key={n} onClick={() => handlePageSize(n)}
+                          className={`px-2 py-0.5 rounded border ${pageSize === n ? "bg-blue-600 text-white border-blue-600 font-semibold" : "border-slate-200 text-slate-600 hover:bg-slate-100"}`}>
+                          {n === 0 ? "全て" : n}
+                        </button>
+                      ))}
+                      {pageSize !== 0 && (
+                        <>
+                          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+                            className="px-2 py-0.5 rounded border border-slate-200 disabled:opacity-30">‹</button>
+                          <span>{page}/{totalPages}</span>
+                          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                            className="px-2 py-0.5 rounded border border-slate-200 disabled:opacity-30">›</button>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Desktop table */}
@@ -361,7 +396,7 @@ function CustomersInner() {
                         <tbody className="divide-y divide-slate-100">
                           {sorted.length === 0 ? (
                             <tr><td colSpan={9} className="px-4 py-16 text-center text-slate-400 text-sm">該当する顧客が見つかりません</td></tr>
-                          ) : sorted.map((customer) => (
+                          ) : paged.map((customer) => (
                             <tr key={customer.id} onClick={() => toggleRow(customer.id)}
                               className={`cursor-pointer transition-colors ${selected.has(customer.id) ? "bg-blue-50 hover:bg-blue-100" : "hover:bg-slate-50"}`}>
                               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -395,11 +430,38 @@ function CustomersInner() {
                         </tbody>
                       </table>
                     </div>
-                    <div className="px-4 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-400">
-                      <span>合計 <span className="font-medium text-slate-600">{customers.length}</span> 件</span>
-                      {selectedCount > 0 && (
-                        <button onClick={() => setSelected(new Set())} className="text-blue-500 hover:text-blue-700 transition-colors">選択を解除</button>
+                    {/* Pagination footer */}
+                    <div className="px-4 py-3 border-t border-slate-100 bg-slate-50 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                      {/* Page-size picker */}
+                      <div className="flex items-center gap-1.5">
+                        <span>表示件数:</span>
+                        {([10, 20, 50, 100, 0] as const).map((n) => (
+                          <button key={n} onClick={() => handlePageSize(n)}
+                            className={`px-2 py-0.5 rounded ${pageSize === n ? "bg-blue-600 text-white font-semibold" : "hover:bg-slate-200 text-slate-600"}`}>
+                            {n === 0 ? "全て" : n}
+                          </button>
+                        ))}
+                      </div>
+
+                      <span className="text-slate-300">|</span>
+
+                      {/* Page navigation */}
+                      {pageSize !== 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+                            className="px-2 py-0.5 rounded hover:bg-slate-200 disabled:opacity-30 disabled:cursor-default">‹</button>
+                          <span>{page} / {totalPages}</span>
+                          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                            className="px-2 py-0.5 rounded hover:bg-slate-200 disabled:opacity-30 disabled:cursor-default">›</button>
+                        </div>
                       )}
+
+                      <span className="ml-auto">
+                        合計 <span className="font-medium text-slate-600">{filtered.length}</span> 件
+                        {selectedCount > 0 && (
+                          <button onClick={() => setSelected(new Set())} className="ml-3 text-blue-500 hover:text-blue-700 transition-colors">選択を解除</button>
+                        )}
+                      </span>
                     </div>
                   </div>
                 </>
