@@ -95,11 +95,17 @@ export async function POST(req: NextRequest) {
     };
   });
 
+  // Collect per-leg polylines for forward legs only (exclude the return-to-origin leg)
+  const legPolylines: string[] = (route.legs as { overview_polyline: { points: string } }[])
+    .slice(0, orderedCustomers.length)
+    .map((leg) => leg.overview_polyline.points);
+
   const result: RouteResult = {
     stops,
     totalDistance: formatDistance(totalDistance),
     totalDuration: formatDuration(totalDuration),
     polyline: route.overview_polyline.points,
+    legPolylines,
     waypointOrder,
   };
 

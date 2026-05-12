@@ -35,10 +35,11 @@ export default function RouteMap({ result, start }: Props) {
         fullscreenControl: true,
       });
 
-      // Route polyline
-      const decodedPath = encoding.decodePath(result.polyline);
+      // Route polyline — concatenate per-leg paths to exclude the return-to-origin leg
+      const forwardPath = (result.legPolylines ?? [result.polyline])
+        .flatMap((enc) => encoding.decodePath(enc));
       new Polyline({
-        path: decodedPath,
+        path: forwardPath,
         geodesic: true,
         strokeColor: "#2563EB",
         strokeOpacity: 0.8,
