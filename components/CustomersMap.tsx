@@ -181,6 +181,18 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
 
       mapInstanceRef.current = map;
       infoWindowRef.current = new InfoWindow();
+
+      // Remove the close button and top padding that Google reserves for it
+      if (!document.getElementById("rp-iw-style")) {
+        const style = document.createElement("style");
+        style.id = "rp-iw-style";
+        style.textContent = `
+          .gm-ui-hover-effect { display: none !important; }
+          .gm-style-iw-c { padding-top: 6px !important; }
+          .gm-style-iw-d { overflow: hidden !important; }
+        `;
+        document.head.appendChild(style);
+      }
     }
 
     initMap();
