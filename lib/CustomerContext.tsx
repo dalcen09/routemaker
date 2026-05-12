@@ -19,6 +19,7 @@ interface CustomerContextValue {
   mergeFromCsv: (incoming: Customer[]) => Promise<{ added: number; skipped: number }>;
   setCustomers: (customers: Customer[]) => void;
   deleteCustomer: (id: string) => Promise<void>;
+  updateCustomer: (id: string, fields: Partial<Omit<Customer, "id">>) => Promise<void>;
   refreshCustomers: () => Promise<void>;
 }
 
@@ -29,6 +30,7 @@ const CustomerContext = createContext<CustomerContextValue>({
   mergeFromCsv: async () => ({ added: 0, skipped: 0 }),
   setCustomers: () => {},
   deleteCustomer: async () => {},
+  updateCustomer: async () => {},
   refreshCustomers: async () => {},
 });
 
@@ -136,13 +138,28 @@ export function CustomerProvider({
     setCustomersState((prev) => prev.filter((c) => c.id !== id));
   }
 
+  async function updateCustomer(id: string, fields: Partial<Omit<Customer, "id">>) {
+    const dbFields: Partial<Omit<DbCustomer, "id" | "user_id" | "created_at">> = {};
+    if (fields.lastName   !== undefined) dbFields.last_name   = fields.lastName;
+    if (fields.firstName  !== undefined) dbFields.first_name  = fields.firstName;
+    if (fields.company    !== undefined) dbFields.company     = fields.company;
+    if (fields.department !== undefined) dbFields.department  = fields.department;
+    if (fields.title      !== undefined) dbFields.title       = fields.title;
+    if (fields.email      !== undefined) dbFields.email       = fields.email;
+    if (fields.phone      !== undefined) dbFields.phone       = fields.phone;
+    if (fields.address    !== undefined) dbFields.address     = fields.address;
+    const { error } = await supabase.from("customers").update(dbFields).eq("id", id);
+    if (error) throw error;
+    setCustomersState((prev) => prev.map((c) => c.id === id ? { ...c, ...fields } : c));
+  }
+
   function setCustomers(cs: Customer[]) {
     setCustomersState(cs);
   }
 
   return (
     <CustomerContext.Provider
-      value={{ customers, loading, saving, mergeFromCsv, setCustomers, deleteCustomer, refreshCustomers }}
+      value={{ customers, loading, saving, mergeFromCsv, setCustomers, deleteCustomer, updateCustomer, refreshCustomers }}
     >
       {children}
     </CustomerContext.Provider>

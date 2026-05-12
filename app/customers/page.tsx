@@ -44,7 +44,7 @@ function avatarColor(id: string) {
 }
 
 function CustomersInner() {
-  const { customers, loading, saving, mergeFromCsv, deleteCustomer } = useCustomers();
+  const { customers, loading, saving, mergeFromCsv, deleteCustomer, updateCustomer } = useCustomers();
   const { user, signOut } = useAuth();
   const { state, progress, result, error, plan, reset } = usePlanner();
   const searchParams = useSearchParams();
@@ -59,6 +59,8 @@ function CustomersInner() {
   const [mergeResult, setMergeResult] = useState<{ added: number; skipped: number } | null>(null);
   const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(1);
+  const [editTarget, setEditTarget] = useState<Customer | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -142,6 +144,29 @@ function CustomersInner() {
     setMode("list");
     setStart(null);
     setSelected(new Set());
+  }
+
+  async function handleSaveEdit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editTarget) return;
+    const fd = new FormData(e.currentTarget);
+    const fields = {
+      lastName:   (fd.get("lastName")   as string).trim(),
+      firstName:  (fd.get("firstName")  as string).trim(),
+      company:    (fd.get("company")    as string).trim(),
+      department: (fd.get("department") as string).trim(),
+      title:      (fd.get("title")      as string).trim(),
+      email:      (fd.get("email")      as string).trim(),
+      phone:      (fd.get("phone")      as string).trim(),
+      address:    (fd.get("address")    as string).trim(),
+    };
+    setEditSaving(true);
+    try {
+      await updateCustomer(editTarget.id, fields);
+      setEditTarget(null);
+    } finally {
+      setEditSaving(false);
+    }
   }
 
   // Pre-select customers coming from the map page (?selected=id1,id2,...)
@@ -329,12 +354,20 @@ function CustomersInner() {
                               {customer.phone && <span className="text-xs text-slate-500">{customer.phone}</span>}
                             </div>
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); deleteCustomer(customer.id); }}
-                            className="shrink-0 text-slate-300 hover:text-red-500 transition-colors" title="削除">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                            </svg>
-                          </button>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button onClick={(e) => { e.stopPropagation(); setEditTarget(customer); }}
+                              className="text-slate-300 hover:text-blue-500 transition-colors" title="編集">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                              </svg>
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); deleteCustomer(customer.id); }}
+                              className="text-slate-300 hover:text-red-500 transition-colors" title="削除">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -390,7 +423,7 @@ function CustomersInner() {
                             ))}
                             <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">メール</th>
                             <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">電話番号</th>
-                            <th className="w-10 px-4 py-3.5" />
+                            <th className="w-20 px-4 py-3.5" />
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -419,11 +452,18 @@ function CustomersInner() {
                               </td>
                               <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">{customer.phone || <span className="text-slate-300">—</span>}</td>
                               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                                <button onClick={() => deleteCustomer(customer.id)} className="text-slate-300 hover:text-red-500 transition-colors" title="削除">
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                  </svg>
-                                </button>
+                                <div className="flex items-center gap-2">
+                                  <button onClick={() => setEditTarget(customer)} className="text-slate-300 hover:text-blue-500 transition-colors" title="編集">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                                    </svg>
+                                  </button>
+                                  <button onClick={() => deleteCustomer(customer.id)} className="text-slate-300 hover:text-red-500 transition-colors" title="削除">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                    </svg>
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -562,6 +602,87 @@ function CustomersInner() {
             </div>
           </div>
         </main>
+      )}
+
+      {/* ── EDIT MODAL ── */}
+      {editTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setEditTarget(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-base font-semibold text-slate-800">顧客情報を編集</h2>
+              <button onClick={() => setEditTarget(null)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="px-6 py-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">姓</label>
+                  <input name="lastName" defaultValue={editTarget.lastName}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">名</label>
+                  <input name="firstName" defaultValue={editTarget.firstName}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">会社名</label>
+                <input name="company" defaultValue={editTarget.company}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">部署</label>
+                  <input name="department" defaultValue={editTarget.department}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">役職</label>
+                  <input name="title" defaultValue={editTarget.title}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">メールアドレス</label>
+                <input name="email" type="email" defaultValue={editTarget.email}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">電話番号</label>
+                <input name="phone" defaultValue={editTarget.phone}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">住所</label>
+                <input name="address" defaultValue={editTarget.address}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setEditTarget(null)}
+                  className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition-colors">
+                  キャンセル
+                </button>
+                <button type="submit" disabled={editSaving}
+                  className="px-5 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl transition-colors flex items-center gap-2">
+                  {editSaving && (
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  )}
+                  保存
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
