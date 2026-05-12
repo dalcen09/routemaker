@@ -2,7 +2,9 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import AppShell from "@/components/AppShell";
 import { useCustomers } from "@/lib/CustomerContext";
+import { useAuth } from "@/lib/useAuth";
 import { Customer } from "@/lib/types";
 
 type SortKey = keyof Pick<Customer, "lastName" | "company" | "department" | "title" | "address">;
@@ -38,8 +40,9 @@ function avatarColor(id: string) {
   return AVATAR_COLORS[(parseInt(n ?? "0") % AVATAR_COLORS.length)];
 }
 
-export default function CustomersPage() {
-  const { customers } = useCustomers();
+function CustomersInner() {
+  const { customers, loading, deleteCustomer } = useCustomers();
+  const { user, signOut } = useAuth();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("lastName");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -142,11 +145,33 @@ export default function CustomersPage() {
               )}
             </span>
           </nav>
+
+          <div className="ml-auto flex items-center gap-2 border-l border-white/10 pl-3">
+            <span className="text-xs text-white/40 hidden sm:block truncate max-w-[140px]">{user?.email}</span>
+            <button
+              onClick={signOut}
+              className="text-xs text-white/50 hover:text-white/80 transition-colors flex items-center gap-1"
+              title="ログアウト"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+              </svg>
+              ログアウト
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
-        {customers.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-24 text-slate-400 text-sm gap-2">
+            <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            顧客データを読み込み中…
+          </div>
+        ) : customers.length === 0 ? (
           <div className="max-w-sm mx-auto text-center py-24">
             <div className="w-16 h-16 rounded-2xl bg-slate-200 flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -251,12 +276,13 @@ export default function CustomersPage() {
                       ))}
                       <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">メール</th>
                       <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">電話番号</th>
+                      <th className="w-10 px-4 py-3.5" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {sorted.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="px-4 py-16 text-center text-slate-400 text-sm">
+                        <td colSpan={9} className="px-4 py-16 text-center text-slate-400 text-sm">
                           該当する顧客が見つかりません
                         </td>
                       </tr>
@@ -309,6 +335,17 @@ export default function CustomersPage() {
                           <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
                             {customer.phone || <span className="text-slate-300">—</span>}
                           </td>
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => deleteCustomer(customer.id)}
+                              className="text-slate-300 hover:text-red-500 transition-colors"
+                              title="削除"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                              </svg>
+                            </button>
+                          </td>
                         </tr>
                       ))
                     )}
@@ -332,5 +369,13 @@ export default function CustomersPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function CustomersPage() {
+  return (
+    <AppShell>
+      <CustomersInner />
+    </AppShell>
   );
 }

@@ -3,12 +3,14 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import Link from "next/link";
+import AppShell from "@/components/AppShell";
 import CsvUploader from "@/components/CsvUploader";
 import CustomerSelector from "@/components/CustomerSelector";
 import StartLocationInput from "@/components/StartLocationInput";
 import RouteResults from "@/components/RouteResults";
 import { usePlanner } from "@/lib/usePlanner";
 import { useCustomers } from "@/lib/CustomerContext";
+import { useAuth } from "@/lib/useAuth";
 import { Customer, StartLocation } from "@/lib/types";
 
 const RouteMap = dynamic(() => import("@/components/RouteMap"), { ssr: false });
@@ -21,16 +23,19 @@ const STEPS = [
   { key: "result", label: "結果" },
 ] as const;
 
-export default function Home() {
+function RoutePlannerInner() {
   const [step, setStep] = useState<Step>("upload");
-  const { customers, setCustomers } = useCustomers();
+  const { customers, loading, saving, mergeFromCsv } = useCustomers();
+  const { user, signOut } = useAuth();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [mergeResult, setMergeResult] = useState<{ added: number; skipped: number } | null>(null);
   const [start, setStart] = useState<StartLocation | null>(null);
   const { state, progress, result, error, plan, reset } = usePlanner();
 
-  function handleCustomersLoaded(loaded: Customer[]) {
-    setCustomers(loaded);
-    setSelected(new Set(loaded.map((c) => c.id)));
+  async function handleCustomersLoaded(loaded: Customer[]) {
+    const r = await mergeFromCsv(loaded);
+    setMergeResult(r);
+    setSelected(new Set(customers.map((c) => c.id)));
     setStep("select");
   }
 
@@ -43,21 +48,13 @@ export default function Home() {
 
   function handleFullReset() {
     reset();
-    setCustomers([]);
     setSelected(new Set());
     setStart(null);
+    setMergeResult(null);
     setStep("upload");
   }
 
-  function handleReplanWithSameCustomers() {
-    reset();
-    setSelected(new Set(customers.map((c) => c.id)));
-    setStart(null);
-    setStep("select");
-  }
-
   const isPlanning = state === "geocoding" || state === "routing";
-
   const activeStepIndex = step === "select" ? 0 : step === "plan" ? 1 : step === "result" ? 2 : -1;
 
   return (
@@ -67,7 +64,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex items-center h-14 gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
-              <svg className="w-4.5 h-4.5 w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
               </svg>
             </div>
@@ -76,29 +73,44 @@ export default function Home() {
 
           <div className="w-px h-5 bg-white/20 mx-1" />
 
-          <nav className="flex gap-1 text-sm">
+          <nav className="flex gap-1">
             <span className="px-3 py-1.5 rounded-md bg-white/10 text-white text-xs font-medium">
               ルート計画
             </span>
-            {customers.length > 0 && (
-              <Link href="/customers" className="px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors">
-                顧客一覧
+            <Link href="/customers" className="px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors">
+              顧客一覧
+              {customers.length > 0 && (
                 <span className="ml-1.5 bg-white/20 text-white/80 text-[10px] px-1.5 py-0.5 rounded-full">{customers.length}</span>
-              </Link>
-            )}
+              )}
+            </Link>
           </nav>
 
-          {step !== "upload" && (
-            <button
-              onClick={handleFullReset}
-              className="ml-auto text-xs text-white/50 hover:text-white/80 transition-colors flex items-center gap-1.5"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-              </svg>
-              最初からやり直す
-            </button>
-          )}
+          <div className="ml-auto flex items-center gap-3">
+            {step !== "upload" && (
+              <button
+                onClick={handleFullReset}
+                className="text-xs text-white/50 hover:text-white/80 transition-colors flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+                最初からやり直す
+              </button>
+            )}
+            <div className="flex items-center gap-2 border-l border-white/10 pl-3">
+              <span className="text-xs text-white/40 hidden sm:block truncate max-w-[140px]">{user?.email}</span>
+              <button
+                onClick={signOut}
+                className="text-xs text-white/50 hover:text-white/80 transition-colors flex items-center gap-1"
+                title="ログアウト"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                </svg>
+                ログアウト
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -146,7 +158,58 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-slate-900 mb-2">訪問ルートを計画しましょう</h2>
               <p className="text-slate-500 text-sm">名刺登録アプリからエクスポートした CSV をアップロードしてください</p>
             </div>
-            <CsvUploader onCustomersLoaded={handleCustomersLoaded} />
+
+            {/* Quick-start if already have customers */}
+            {!loading && customers.length > 0 && (
+              <div className="mb-5 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    保存済みの顧客データがあります
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">{customers.length} 件 — CSV をアップロードせずにそのまま計画できます</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelected(new Set(customers.map((c) => c.id)));
+                    setStep("select");
+                  }}
+                  className="shrink-0 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-xl transition-colors shadow-sm"
+                >
+                  そのまま計画する
+                </button>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="flex items-center justify-center py-12 text-slate-400 text-sm gap-2">
+                <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                顧客データを読み込み中…
+              </div>
+            ) : (
+              <>
+                {saving && (
+                  <div className="mb-3 flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Supabase に保存中…
+                  </div>
+                )}
+                {mergeResult && (
+                  <div className="mb-3 flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                    <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                    </svg>
+                    {mergeResult.added} 件を追加しました（{mergeResult.skipped} 件は重複のためスキップ）
+                  </div>
+                )}
+                <CsvUploader onCustomersLoaded={handleCustomersLoaded} />
+              </>
+            )}
           </div>
         )}
 
@@ -253,5 +316,13 @@ export default function Home() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <AppShell>
+      <RoutePlannerInner />
+    </AppShell>
   );
 }
