@@ -143,19 +143,19 @@ function CustomersInner() {
 
           <div className="w-px h-5 bg-white/20 mx-1" />
 
-          <nav className="flex gap-1 text-sm">
-            <Link href="/" className="px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors">
+          <nav className="flex gap-1">
+            <Link href="/" className="px-2 sm:px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors whitespace-nowrap">
               <span className="inline sm:hidden">ルート</span>
               <span className="hidden sm:inline">ルート計画</span>
             </Link>
-            <span className="px-3 py-1.5 rounded-md bg-white/10 text-white text-xs font-medium">
+            <span className="px-2 sm:px-3 py-1.5 rounded-md bg-white/10 text-white text-xs font-medium whitespace-nowrap">
               <span className="inline sm:hidden">顧客</span>
               <span className="hidden sm:inline">顧客一覧</span>
               {customers.length > 0 && (
                 <span className="ml-1.5 bg-white/20 text-white/80 text-[10px] px-1.5 py-0.5 rounded-full">{customers.length}</span>
               )}
             </span>
-            <Link href="/map" className="px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors">
+            <Link href="/map" className="px-2 sm:px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors whitespace-nowrap">
               <span className="inline sm:hidden">マップ</span>
               <span className="hidden sm:inline">顧客マップ</span>
             </Link>
@@ -171,7 +171,7 @@ function CustomersInner() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
               </svg>
-              ログアウト
+              <span className="hidden sm:inline">ログアウト</span>
             </button>
           </div>
         </div>
