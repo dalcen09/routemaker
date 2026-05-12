@@ -30,11 +30,10 @@ export function usePlanner() {
             body: JSON.stringify({ address: customer.address }),
           });
           const data = await res.json();
-          if (res.ok) {
+          if (res.ok && data.lat && data.lng) {
             geocoded.push({ ...customer, lat: data.lat, lng: data.lng, geocoded: true });
           } else {
-            // Skip customers whose address couldn't be geocoded
-            console.warn(`Skipping ${customer.lastName} ${customer.firstName}: ${data.error}`);
+            console.warn(`Skipping ${customer.lastName} ${customer.firstName}: ${data.error ?? "no coordinates"}`);
           }
         } catch {
           console.warn(`Geocode error for ${customer.address}`);

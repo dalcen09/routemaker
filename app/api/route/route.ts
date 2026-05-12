@@ -6,6 +6,30 @@ interface RouteRequest {
   customers: Customer[];
 }
 
+// Japan bounding box — reject geocoding results wildly outside Japan
+const JP = { latMin: 24, latMax: 46, lngMin: 122, lngMax: 147 };
+
+function validCoord(lat: number | undefined, lng: number | undefined): boolean {
+  if (!lat || !lng || isNaN(lat) || isNaN(lng)) return false;
+  return lat >= JP.latMin && lat <= JP.latMax && lng >= JP.lngMin && lng <= JP.lngMax;
+}
+
+async function callDirections(origin: string, destination: string, waypoints: string[], optimize: boolean, apiKey: string) {
+  const wpParam = `${optimize ? "optimize:true|" : ""}${waypoints.join("|")}`;
+  const url =
+    `https://maps.googleapis.com/maps/api/directions/json` +
+    `?origin=${encodeURIComponent(origin)}` +
+    `&destination=${encodeURIComponent(destination)}` +
+    `&waypoints=${encodeURIComponent(wpParam)}` +
+    `&mode=driving` +
+    `&language=ja` +
+    `&region=JP` +
+    `&key=${apiKey}`;
+
+  const res = await fetch(url);
+  return res.json();
+}
+
 export async function POST(req: NextRequest) {
   const { start, customers }: RouteRequest = await req.json();
 
@@ -18,42 +42,49 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "API key not configured" }, { status: 500 });
   }
 
-  const origin = `${start.lat},${start.lng}`;
-  const destination = origin; // Round trip back to start
+  if (!validCoord(start.lat, start.lng)) {
+    return NextResponse.json({ error: "出発地の座標が無効です。住所を確認してください。" }, { status: 422 });
+  }
 
-  // Build waypoints from geocoded customers (max 25 for Directions API)
-  const waypoints = customers
+  const validCustomers = customers
     .slice(0, 25)
-    .map((c) => `${c.lat},${c.lng}`)
-    .join("|");
+    .filter((c) => validCoord(c.lat, c.lng));
 
-  const url =
-    `https://maps.googleapis.com/maps/api/directions/json` +
-    `?origin=${encodeURIComponent(origin)}` +
-    `&destination=${encodeURIComponent(destination)}` +
-    `&waypoints=optimize:true|${encodeURIComponent(waypoints)}` +
-    `&language=ja` +
-    `&region=JP` +
-    `&key=${apiKey}`;
+  if (validCustomers.length === 0) {
+    return NextResponse.json({ error: "ルート計算できる住所が見つかりませんでした。" }, { status: 422 });
+  }
 
-  const res = await fetch(url);
-  const data = await res.json();
+  const origin = `${start.lat},${start.lng}`;
+  const destination = origin; // Round trip
+  const waypoints = validCustomers.map((c) => `${c.lat},${c.lng}`);
+
+  // Try with optimization first, fall back to fixed order if ZERO_RESULTS
+  let data = await callDirections(origin, destination, waypoints, true, apiKey);
+
+  if (data.status === "ZERO_RESULTS" && validCustomers.length > 1) {
+    data = await callDirections(origin, destination, waypoints, false, apiKey);
+  }
 
   if (data.status !== "OK") {
-    return NextResponse.json({ error: `Directions API: ${data.status}`, details: data.error_message }, { status: 422 });
+    const hint =
+      data.status === "ZERO_RESULTS"
+        ? "出発地と顧客住所の間にルートが見つかりませんでした。住所が正しいか確認してください。"
+        : `Directions API: ${data.status}`;
+    return NextResponse.json({ error: hint, details: data.error_message }, { status: 422 });
   }
 
   const route = data.routes[0];
   const waypointOrder: number[] = route.waypoint_order;
 
-  // Build ordered stops
-  const orderedCustomers = waypointOrder.map((i) => customers[i]);
+  const orderedCustomers = waypointOrder.length > 0
+    ? waypointOrder.map((i) => validCustomers[i])
+    : validCustomers; // fixed-order fallback
 
   let totalDistance = 0;
   let totalDuration = 0;
 
   const stops = orderedCustomers.map((customer, idx) => {
-    const leg = route.legs[idx]; // leg 0 = start→first stop, etc.
+    const leg = route.legs[idx];
     totalDistance += leg.distance.value;
     totalDuration += leg.duration.value;
     return {
