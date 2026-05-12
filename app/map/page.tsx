@@ -8,6 +8,7 @@ import AppShell from "@/components/AppShell";
 import { useCustomers } from "@/lib/CustomerContext";
 import { useAuth } from "@/lib/useAuth";
 import { Customer } from "@/lib/types";
+import ChangePasswordModal from "@/components/ChangePasswordModal";
 
 const CustomersMap = dynamic(() => import("@/components/CustomersMap"), { ssr: false });
 
@@ -20,6 +21,7 @@ function MapInner() {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   function toggleSelected(id: string) {
     setSelected((prev) => {
@@ -79,6 +81,11 @@ function MapInner() {
 
           <div className="ml-auto flex items-center gap-2 border-l border-white/10 pl-3">
             <span className="text-xs text-white/40 hidden sm:block truncate max-w-[140px]">{user?.email}</span>
+            <button onClick={() => setShowChangePassword(true)} className="text-xs text-white/50 hover:text-white/80 transition-colors flex items-center gap-1" title="パスワード変更">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+              </svg>
+            </button>
             <button
               onClick={signOut}
               className="text-xs text-white/50 hover:text-white/80 transition-colors flex items-center gap-1"
@@ -245,6 +252,8 @@ function MapInner() {
           </div>
         </div>
       )}
+
+      {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
     </div>
   );
 }
