@@ -25,7 +25,7 @@ export interface RouteResult {
   totalDistance: string;
   totalDuration: string;
   polyline: string;
-  legPolylines: string[];
+  stepPolylines: string[];
   waypointOrder: number[];
 }
 

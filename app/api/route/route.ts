@@ -95,17 +95,18 @@ export async function POST(req: NextRequest) {
     };
   });
 
-  // Collect per-leg polylines for forward legs only (exclude the return-to-origin leg)
-  const legPolylines: string[] = (route.legs as { overview_polyline: { points: string } }[])
+  // Collect all step polylines from forward legs only (exclude the return-to-origin leg).
+  // Legs don't have their own overview_polyline — steps do.
+  const stepPolylines: string[] = (route.legs as { steps: { polyline: { points: string } }[] }[])
     .slice(0, orderedCustomers.length)
-    .map((leg) => leg.overview_polyline.points);
+    .flatMap((leg) => leg.steps.map((step) => step.polyline.points));
 
   const result: RouteResult = {
     stops,
     totalDistance: formatDistance(totalDistance),
     totalDuration: formatDuration(totalDuration),
     polyline: route.overview_polyline.points,
-    legPolylines,
+    stepPolylines,
     waypointOrder,
   };
 

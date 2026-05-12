@@ -35,8 +35,8 @@ export default function RouteMap({ result, start }: Props) {
         fullscreenControl: true,
       });
 
-      // Route polyline — concatenate per-leg paths to exclude the return-to-origin leg
-      const forwardPath = (result.legPolylines ?? [result.polyline])
+      // Route polyline — concatenate per-step paths (forward legs only, no return-to-origin)
+      const forwardPath = (result.stepPolylines?.length ? result.stepPolylines : [result.polyline])
         .flatMap((enc) => encoding.decodePath(enc));
       new Polyline({
         path: forwardPath,
