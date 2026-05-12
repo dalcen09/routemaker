@@ -52,7 +52,7 @@ function MapInner() {
       {/* Header */}
       <header className="bg-slate-900 text-white px-6 py-0 shrink-0">
         <div className="max-w-full flex items-center h-14 gap-2 sm:gap-4">
-          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <Link href="/customers" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
@@ -64,10 +64,6 @@ function MapInner() {
           <div className="w-px h-5 bg-white/20 mx-1" />
 
           <nav className="flex gap-1">
-            <Link href="/" className="px-2 sm:px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors whitespace-nowrap">
-              <span className="inline sm:hidden">ルート</span>
-              <span className="hidden sm:inline">ルート計画</span>
-            </Link>
             <Link href="/customers" className="px-2 sm:px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors whitespace-nowrap">
               <span className="inline sm:hidden">顧客</span>
               <span className="hidden sm:inline">顧客一覧</span>
@@ -112,7 +108,7 @@ function MapInner() {
           ) : customers.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
               <p className="text-slate-500 text-sm mb-4">顧客データがありません</p>
-              <Link href="/" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
+              <Link href="/customers" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
                 CSVをアップロードする
               </Link>
             </div>
