@@ -52,7 +52,7 @@ export default function CsvUploader({ onCustomersLoaded }: Props) {
     <div className="w-full">
       {/* Drop zone */}
       <div
-        className={`relative border-2 border-dashed rounded-2xl p-14 text-center cursor-pointer transition-all duration-200
+        className={`relative border-2 border-dashed rounded-2xl p-6 sm:p-14 text-center cursor-pointer transition-all duration-200
           ${dragging
             ? "border-blue-500 bg-blue-50 scale-[1.01]"
             : "border-slate-200 bg-white hover:border-blue-400 hover:bg-slate-50"

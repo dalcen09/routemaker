@@ -145,16 +145,19 @@ function CustomersInner() {
 
           <nav className="flex gap-1 text-sm">
             <Link href="/" className="px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors">
-              ルート計画
+              <span className="inline sm:hidden">ルート</span>
+              <span className="hidden sm:inline">ルート計画</span>
             </Link>
             <span className="px-3 py-1.5 rounded-md bg-white/10 text-white text-xs font-medium">
-              顧客一覧
+              <span className="inline sm:hidden">顧客</span>
+              <span className="hidden sm:inline">顧客一覧</span>
               {customers.length > 0 && (
                 <span className="ml-1.5 bg-white/20 text-white/80 text-[10px] px-1.5 py-0.5 rounded-full">{customers.length}</span>
               )}
             </span>
             <Link href="/map" className="px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors">
-              顧客マップ
+              <span className="inline sm:hidden">マップ</span>
+              <span className="hidden sm:inline">顧客マップ</span>
             </Link>
           </nav>
 
@@ -205,53 +208,126 @@ function CustomersInner() {
         ) : (
           <>
             {/* Page title + toolbar */}
-            <div className="flex flex-wrap items-center gap-3 mb-5">
-              <div>
-                <h1 className="text-lg font-semibold text-slate-900">顧客一覧</h1>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {filtered.length} / {customers.length} 件表示
-                  {selected.size > 0 && <span className="ml-2 text-blue-600 font-medium">{selected.size} 件選択中</span>}
-                </p>
-              </div>
+            <div className="mb-5 space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div>
+                  <h1 className="text-lg font-semibold text-slate-900">顧客一覧</h1>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {filtered.length} / {customers.length} 件表示
+                    {selected.size > 0 && <span className="ml-2 text-blue-600 font-medium">{selected.size} 件選択中</span>}
+                  </p>
+                </div>
 
-              <div className="flex-1 min-w-56 ml-auto">
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="氏名・会社・住所・メール・電話で検索"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
-                  />
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    onClick={exportCsv}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 transition-colors shadow-sm font-medium"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    <span className="hidden sm:inline">CSV エクスポート{selected.size > 0 ? ` (${selected.size})` : ""}</span>
+                    <span className="inline sm:hidden">CSV</span>
+                  </button>
+
+                  <button
+                    onClick={handlePlanRoute}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+                    </svg>
+                    <span className="hidden sm:inline">ルートを計画する{selected.size > 0 ? `（${selected.size} 件）` : ""}</span>
+                    <span className="inline sm:hidden">計画{selected.size > 0 ? `(${selected.size})` : ""}</span>
+                  </button>
                 </div>
               </div>
 
-              <button
-                onClick={exportCsv}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 transition-colors shadow-sm font-medium"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
-                CSV エクスポート{selected.size > 0 ? ` (${selected.size})` : ""}
-              </button>
-
-              <button
-                onClick={handlePlanRoute}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
-                </svg>
-                ルートを計画する{selected.size > 0 ? `（${selected.size} 件）` : ""}
-              </button>
+                <input
+                  type="text"
+                  placeholder="氏名・会社・住所・メール・電話で検索"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                />
+              </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            {/* Mobile card view */}
+            <div className="md:hidden space-y-2">
+              {sorted.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 text-sm">該当する顧客が見つかりません</div>
+              ) : (
+                sorted.map((customer) => (
+                  <div
+                    key={customer.id}
+                    className={`bg-white rounded-xl border p-4 shadow-sm cursor-pointer transition-colors ${
+                      selected.has(customer.id) ? "border-blue-400 bg-blue-50" : "border-slate-200"
+                    }`}
+                    onClick={() => toggleRow(customer.id)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(customer.id)}
+                        onChange={() => toggleRow(customer.id)}
+                        className="w-4 h-4 rounded accent-blue-600 mt-1 shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${avatarColor(customer.id)}`}>
+                        {initials(customer)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-slate-800 text-sm">{displayName(customer)}</div>
+                        {customer.company && <div className="text-xs text-slate-500 mt-0.5 truncate">{customer.company}</div>}
+                        {customer.department && <div className="text-xs text-slate-400 truncate">{customer.department}</div>}
+                        {customer.address && <div className="text-xs text-slate-400 mt-1 truncate">{customer.address}</div>}
+                        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                          {customer.email && (
+                            <a
+                              href={`mailto:${customer.email}`}
+                              className="text-blue-600 hover:text-blue-800 text-xs truncate max-w-[160px]"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {customer.email}
+                            </a>
+                          )}
+                          {customer.phone && (
+                            <span className="text-xs text-slate-500">{customer.phone}</span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteCustomer(customer.id); }}
+                        className="shrink-0 text-slate-300 hover:text-red-500 transition-colors"
+                        title="削除"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+              {selected.size > 0 && (
+                <div className="text-right">
+                  <button
+                    onClick={() => setSelected(new Set())}
+                    className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
+                  >
+                    選択を解除
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Table (desktop) */}
+            <div className="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>

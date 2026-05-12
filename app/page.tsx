@@ -90,16 +90,19 @@ function RoutePlannerInner() {
 
           <nav className="flex gap-1">
             <span className="px-3 py-1.5 rounded-md bg-white/10 text-white text-xs font-medium">
-              ルート計画
+              <span className="inline sm:hidden">ルート</span>
+              <span className="hidden sm:inline">ルート計画</span>
             </span>
             <Link href="/customers" className="px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors">
-              顧客一覧
+              <span className="inline sm:hidden">顧客</span>
+              <span className="hidden sm:inline">顧客一覧</span>
               {customers.length > 0 && (
                 <span className="ml-1.5 bg-white/20 text-white/80 text-[10px] px-1.5 py-0.5 rounded-full">{customers.length}</span>
               )}
             </Link>
             <Link href="/map" className="px-3 py-1.5 rounded-md text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-colors">
-              顧客マップ
+              <span className="inline sm:hidden">マップ</span>
+              <span className="hidden sm:inline">顧客マップ</span>
             </Link>
           </nav>
 
@@ -295,11 +298,11 @@ function RoutePlannerInner() {
 
         {/* Step: Result */}
         {step === "result" && result && start && (
-          <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 h-[calc(100vh-148px)] min-h-[520px]">
-            <div className="overflow-y-auto bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 lg:h-[calc(100vh-148px)] min-h-[520px]">
+            <div className="overflow-y-auto bg-white rounded-2xl border border-slate-200 p-5 shadow-sm lg:h-full">
               <RouteResults result={result} start={start} onReset={handleFullReset} />
             </div>
-            <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm min-h-[400px]">
+            <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm min-h-[300px] lg:min-h-0">
               <RouteMap result={result} start={start} />
             </div>
           </div>
