@@ -18,8 +18,8 @@ interface Props {
   onToggle: (id: string) => void;
 }
 
-// localStorage cache: { [customerId]: { lat, lng, address } }
-const CACHE_KEY = "rp_geocache_v1";
+const CACHE_KEY    = "rp_geocache_v1";
+const MAP_VIEW_KEY = "rp_mapview_v1";
 
 interface CacheEntry { lat: number; lng: number; address: string }
 type GeoCache = Record<string, CacheEntry>;
@@ -32,6 +32,18 @@ function loadCache(): GeoCache {
 function saveCache(cache: GeoCache) {
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); }
   catch { /* storage full – ignore */ }
+}
+
+interface MapView { lat: number; lng: number; zoom: number }
+
+function loadMapView(): MapView | null {
+  try { return JSON.parse(localStorage.getItem(MAP_VIEW_KEY) ?? "null"); }
+  catch { return null; }
+}
+
+function saveMapView(view: MapView) {
+  try { localStorage.setItem(MAP_VIEW_KEY, JSON.stringify(view)); }
+  catch { /* ignore */ }
 }
 
 export default function CustomersMap({ customers, selected, onToggle }: Props) {
@@ -139,25 +151,43 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
 
     setOptions({ key: apiKey, v: "weekly" });
     let cancelled = false;
+    let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
     async function initMap() {
       const { Map, InfoWindow } = await importLibrary("maps");
       if (cancelled || !mapRef.current) return;
 
+      const saved = loadMapView();
+
       const map = new Map(mapRef.current, {
-        zoom: 10,
-        center: { lat: 35.6895, lng: 139.6917 },
+        zoom: saved?.zoom ?? 10,
+        center: saved ? { lat: saved.lat, lng: saved.lng } : { lat: 35.6895, lng: 139.6917 },
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: true,
       });
+
+      // Persist view on every pan/zoom (debounced 500 ms)
+      const persist = () => {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          const c = map.getCenter();
+          const z = map.getZoom();
+          if (c && z !== undefined) saveMapView({ lat: c.lat(), lng: c.lng(), zoom: z });
+        }, 500);
+      };
+      map.addListener("center_changed", persist);
+      map.addListener("zoom_changed", persist);
 
       mapInstanceRef.current = map;
       infoWindowRef.current = new InfoWindow();
     }
 
     initMap();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (saveTimer) clearTimeout(saveTimer);
+    };
   }, []);
 
   // Add/update markers when geocoded list grows
@@ -213,7 +243,8 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
         markersRef.current.set(c.id, marker);
       });
 
-      mapSnapshot.fitBounds(bounds, 60);
+      // Only auto-fit on first ever load; afterwards respect the saved view
+      if (!loadMapView()) mapSnapshot.fitBounds(bounds, 60);
     }
 
     addMarkers();
