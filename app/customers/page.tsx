@@ -436,10 +436,7 @@ function CustomersInner() {
                                 <input type="checkbox" checked={selected.has(customer.id)} onChange={() => toggleRow(customer.id)} className="w-4 h-4 rounded accent-blue-600" />
                               </td>
                               <td className="px-4 py-3">
-                                <div className="flex items-center gap-2.5">
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${avatarColor(customer.id)}`}>{initials(customer)}</div>
-                                  <span className="font-medium text-slate-800">{displayName(customer)}</span>
-                                </div>
+                                <span className="font-medium text-slate-800">{displayName(customer)}</span>
                               </td>
                               <td className="px-4 py-3 text-slate-700 max-w-[180px] truncate">{customer.company || <span className="text-slate-300">—</span>}</td>
                               <td className="px-4 py-3 text-slate-500 max-w-[140px] truncate">{customer.department || <span className="text-slate-300">—</span>}</td>
