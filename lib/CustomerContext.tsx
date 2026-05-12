@@ -19,6 +19,7 @@ interface CustomerContextValue {
   mergeFromCsv: (incoming: Customer[]) => Promise<{ added: number; skipped: number }>;
   setCustomers: (customers: Customer[]) => void;
   deleteCustomer: (id: string) => Promise<void>;
+  deleteCustomers: (ids: string[]) => Promise<void>;
   updateCustomer: (id: string, fields: Partial<Omit<Customer, "id">>) => Promise<void>;
   refreshCustomers: () => Promise<void>;
 }
@@ -30,6 +31,7 @@ const CustomerContext = createContext<CustomerContextValue>({
   mergeFromCsv: async () => ({ added: 0, skipped: 0 }),
   setCustomers: () => {},
   deleteCustomer: async () => {},
+  deleteCustomers: async () => {},
   updateCustomer: async () => {},
   refreshCustomers: async () => {},
 });
@@ -138,6 +140,12 @@ export function CustomerProvider({
     setCustomersState((prev) => prev.filter((c) => c.id !== id));
   }
 
+  async function deleteCustomers(ids: string[]) {
+    if (ids.length === 0) return;
+    await supabase.from("customers").delete().in("id", ids);
+    setCustomersState((prev) => prev.filter((c) => !ids.includes(c.id)));
+  }
+
   async function updateCustomer(id: string, fields: Partial<Omit<Customer, "id">>) {
     const dbFields: Partial<Omit<DbCustomer, "id" | "user_id" | "created_at">> = {};
     if (fields.lastName   !== undefined) dbFields.last_name   = fields.lastName;
@@ -159,7 +167,7 @@ export function CustomerProvider({
 
   return (
     <CustomerContext.Provider
-      value={{ customers, loading, saving, mergeFromCsv, setCustomers, deleteCustomer, updateCustomer, refreshCustomers }}
+      value={{ customers, loading, saving, mergeFromCsv, setCustomers, deleteCustomer, deleteCustomers, updateCustomer, refreshCustomers }}
     >
       {children}
     </CustomerContext.Provider>

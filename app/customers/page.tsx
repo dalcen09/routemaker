@@ -46,7 +46,7 @@ function avatarColor(id: string) {
 }
 
 function CustomersInner() {
-  const { customers, loading, saving, mergeFromCsv, deleteCustomer, updateCustomer } = useCustomers();
+  const { customers, loading, saving, mergeFromCsv, deleteCustomer, deleteCustomers, updateCustomer } = useCustomers();
   const { user, signOut } = useAuth();
   const { state, progress, result, error, plan, reset } = usePlanner();
   const searchParams = useSearchParams();
@@ -65,6 +65,8 @@ function CustomersInner() {
   const [editSaving, setEditSaving] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -148,6 +150,17 @@ function CustomersInner() {
     setMode("list");
     setStart(null);
     setSelected(new Set());
+  }
+
+  async function handleBulkDelete() {
+    setBulkDeleting(true);
+    try {
+      await deleteCustomers([...selected]);
+      setSelected(new Set());
+      setShowBulkDelete(false);
+    } finally {
+      setBulkDeleting(false);
+    }
   }
 
   async function handleSaveEdit(e: React.FormEvent<HTMLFormElement>) {
@@ -299,6 +312,17 @@ function CustomersInner() {
                       </svg>
                       <span className="hidden sm:inline">エクスポート</span>
                     </button>
+                    {selectedCount > 0 && (
+                      <button
+                        onClick={() => setShowBulkDelete(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs bg-red-50 border border-red-200 text-red-600 rounded-lg hover:bg-red-100 transition-colors shadow-sm font-medium whitespace-nowrap">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                        <span className="hidden sm:inline">削除（{selectedCount}件）</span>
+                        <span className="inline sm:hidden">削除({selectedCount})</span>
+                      </button>
+                    )}
                     {customers.length > 0 && (
                       <button
                         onClick={() => setMode("start")}
@@ -634,6 +658,42 @@ function CustomersInner() {
 
       {/* ── DELETE ACCOUNT MODAL ── */}
       {showDeleteAccount && <DeleteAccountModal onClose={() => setShowDeleteAccount(false)} />}
+
+      {/* ── BULK DELETE CONFIRM ── */}
+      {showBulkDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowBulkDelete(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-base font-semibold text-slate-800">顧客を削除</h2>
+              <button onClick={() => setShowBulkDelete(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm text-slate-600">
+                選択した <span className="font-semibold text-slate-900">{selected.size} 件</span> の顧客データを削除します。この操作は取り消せません。
+              </p>
+              <div className="flex items-center justify-end gap-3">
+                <button onClick={() => setShowBulkDelete(false)} disabled={bulkDeleting} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition-colors disabled:opacity-50">
+                  キャンセル
+                </button>
+                <button onClick={handleBulkDelete} disabled={bulkDeleting}
+                  className="px-5 py-2 text-sm font-semibold bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-xl transition-colors flex items-center gap-2">
+                  {bulkDeleting && (
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  )}
+                  削除する
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── EDIT MODAL ── */}
       {editTarget && (
