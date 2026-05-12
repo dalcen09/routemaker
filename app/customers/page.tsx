@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import CsvUploader from "@/components/CsvUploader";
@@ -116,7 +116,7 @@ function CustomersInner() {
     const targets = customers.filter((c) => selected.has(c.id));
     if (targets.length === 0) return;
     setMode("planning");
-    plan(start, targets).then(() => setMode("result"));
+    plan(start, targets);
   }
 
   function handleReset() {
@@ -125,6 +125,12 @@ function CustomersInner() {
     setStart(null);
     setSelected(new Set());
   }
+
+  // Automatically transition mode based on planner state
+  useEffect(() => {
+    if (mode !== "planning") return;
+    if (state === "done") setMode("result");
+  }, [state, mode]);
 
   const selectedCount = selected.size;
   const allChecked = sorted.length > 0 && selectedCount === sorted.length;
@@ -458,7 +464,7 @@ function CustomersInner() {
             </div>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">エラーが発生しました</h2>
             <p className="text-sm text-slate-500 mb-6">{error}</p>
-            <button onClick={() => setMode("start")} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 text-sm font-medium">
+            <button onClick={() => { reset(); setMode("start"); }} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 text-sm font-medium">
               戻る
             </button>
           </div>
