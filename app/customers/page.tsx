@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { useCustomers } from "@/lib/CustomerContext";
 import { useAuth } from "@/lib/useAuth";
@@ -43,10 +44,18 @@ function avatarColor(id: string) {
 function CustomersInner() {
   const { customers, loading, deleteCustomer } = useCustomers();
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("lastName");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  function handlePlanRoute() {
+    const ids = selected.size > 0
+      ? [...selected].join(",")
+      : customers.map((c) => c.id).join(",");
+    router.push(`/?selected=${encodeURIComponent(ids)}`);
+  }
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -187,7 +196,7 @@ function CustomersInner() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
               </svg>
-              CSV をアップロードする
+              ルート計画へ
             </Link>
           </div>
         ) : (
@@ -227,15 +236,15 @@ function CustomersInner() {
                 CSV エクスポート{selected.size > 0 ? ` (${selected.size})` : ""}
               </button>
 
-              <Link
-                href="/"
+              <button
+                onClick={handlePlanRoute}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
                 </svg>
-                ルートを計画する
-              </Link>
+                ルートを計画する{selected.size > 0 ? `（${selected.size} 件）` : ""}
+              </button>
             </div>
 
             {/* Table */}

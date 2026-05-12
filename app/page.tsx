@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import CsvUploader from "@/components/CsvUploader";
 import CustomerSelector from "@/components/CustomerSelector";
@@ -27,10 +28,24 @@ function RoutePlannerInner() {
   const [step, setStep] = useState<Step>("upload");
   const { customers, loading, saving, mergeFromCsv } = useCustomers();
   const { user, signOut } = useAuth();
+  const searchParams = useSearchParams();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mergeResult, setMergeResult] = useState<{ added: number; skipped: number } | null>(null);
   const [start, setStart] = useState<StartLocation | null>(null);
   const { state, progress, result, error, plan, reset } = usePlanner();
+
+  // When arriving from the customers page with ?selected=id1,id2,...
+  useEffect(() => {
+    if (loading) return;
+    const param = searchParams.get("selected");
+    if (!param || customers.length === 0) return;
+    const ids = new Set(param.split(",").filter(Boolean));
+    const valid = new Set([...ids].filter((id) => customers.some((c) => c.id === id)));
+    if (valid.size > 0) {
+      setSelected(valid);
+      setStep("select");
+    }
+  }, [loading, customers, searchParams]);
 
   async function handleCustomersLoaded(loaded: Customer[]) {
     const r = await mergeFromCsv(loaded);
@@ -322,7 +337,9 @@ function RoutePlannerInner() {
 export default function Home() {
   return (
     <AppShell>
-      <RoutePlannerInner />
+      <Suspense>
+        <RoutePlannerInner />
+      </Suspense>
     </AppShell>
   );
 }
