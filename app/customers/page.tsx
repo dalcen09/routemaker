@@ -487,10 +487,24 @@ function CustomersInner() {
 
                       {/* Page navigation */}
                       {pageSize !== 0 && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
                           <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
                             className="px-2 py-0.5 rounded hover:bg-slate-200 disabled:opacity-30 disabled:cursor-default">‹</button>
-                          <span>{page} / {totalPages}</span>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 2)
+                            .reduce<(number | "…")[]>((acc, n, i, arr) => {
+                              if (i > 0 && n - (arr[i - 1] as number) > 1) acc.push("…");
+                              acc.push(n);
+                              return acc;
+                            }, [])
+                            .map((n, i) =>
+                              n === "…"
+                                ? <span key={`ellipsis-${i}`} className="px-1 text-slate-400">…</span>
+                                : <button key={n} onClick={() => setPage(n)}
+                                    className={`min-w-[24px] px-1.5 py-0.5 rounded text-center ${page === n ? "bg-blue-600 text-white font-semibold" : "hover:bg-slate-200 text-slate-600"}`}>
+                                    {n}
+                                  </button>
+                            )}
                           <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
                             className="px-2 py-0.5 rounded hover:bg-slate-200 disabled:opacity-30 disabled:cursor-default">›</button>
                         </div>
