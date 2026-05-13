@@ -9,8 +9,8 @@ export interface GeoCustomer extends Customer {
   lng: number;
 }
 
-const BLUE   = { fill: "#2563EB", stroke: "#fff", scale: 9 };
-const ORANGE = { fill: "#EA580C", stroke: "#fff", scale: 11 };
+const UNSELECTED = { fill: "#EA580C", stroke: "#fff", scale: 9 };
+const SELECTED   = { fill: "#DC2626", stroke: "#fff", scale: 11 };
 
 interface Props {
   customers: Customer[];
@@ -58,6 +58,7 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [geocoding, setGeocoding] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [currentPos, setCurrentPos] = useState<{ lat: number; lng: number } | null>(null);
 
   const withAddress = customers.filter((c) => c.address.trim().length > 0);
 
@@ -65,7 +66,7 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
       const isSelected = selected.has(id);
-      const s = isSelected ? ORANGE : BLUE;
+      const s = isSelected ? SELECTED : UNSELECTED;
       marker.setIcon({
         path: google.maps.SymbolPath.CIRCLE,
         scale: s.scale,
@@ -251,7 +252,9 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         setLocationError(null);
-        placeMarker(pos.coords.latitude, pos.coords.longitude);
+        const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setCurrentPos(latlng);
+        placeMarker(latlng.lat, latlng.lng);
       },
       (err) => {
         if (err.code === err.PERMISSION_DENIED) setLocationError("位置情報へのアクセスが拒否されました。");
@@ -284,7 +287,7 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
         bounds.extend(pos);
 
         const isSelected = selected.has(c.id);
-        const s = isSelected ? ORANGE : BLUE;
+        const s = isSelected ? SELECTED : UNSELECTED;
 
         const marker = new Marker({
           position: pos,
@@ -358,6 +361,20 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Return to current location button */}
+      {currentPos && (
+        <button
+          onClick={() => mapInstanceRef.current?.panTo(currentPos)}
+          className="absolute bottom-8 right-3 z-10 bg-white border border-slate-200 rounded-xl shadow-md p-2.5 hover:bg-slate-50 transition-colors"
+          title="現在地に戻る"
+        >
+          <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+          </svg>
+        </button>
       )}
 
       {/* Location permission error */}
