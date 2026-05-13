@@ -774,10 +774,8 @@ function CustomersInner() {
 
 export default function CustomersPage() {
   return (
-    <AppShell>
-      <Suspense>
-        <CustomersInner />
-      </Suspense>
-    </AppShell>
+    <Suspense>
+      <CustomersInner />
+    </Suspense>
   );
 }
