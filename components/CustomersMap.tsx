@@ -51,10 +51,13 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const myLocationMarkerRef = useRef<google.maps.Marker | null>(null);
+  const watchIdRef = useRef<number | null>(null);
 
   const [geocoded, setGeocoded] = useState<GeoCustomer[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [geocoding, setGeocoding] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const withAddress = customers.filter((c) => c.address.trim().length > 0);
 
@@ -203,6 +206,53 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
     };
   }, []);
 
+  // Watch user's current location and show a marker on the map
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    async function placeMarker(lat: number, lng: number) {
+      const map = mapInstanceRef.current;
+      if (!map) return;
+      const { Marker } = await importLibrary("marker");
+      const pos = { lat, lng };
+      if (myLocationMarkerRef.current) {
+        myLocationMarkerRef.current.setPosition(pos);
+      } else {
+        myLocationMarkerRef.current = new Marker({
+          position: pos,
+          map,
+          zIndex: 20,
+          title: "現在地",
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: "#3B82F6",
+            fillOpacity: 1,
+            strokeColor: "#fff",
+            strokeWeight: 3,
+          },
+        });
+      }
+    }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        setLocationError(null);
+        placeMarker(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) setLocationError("位置情報へのアクセスが拒否されました。");
+      },
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    );
+
+    return () => {
+      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+      myLocationMarkerRef.current?.setMap(null);
+      myLocationMarkerRef.current = null;
+    };
+  }, []);
+
   // Add/update markers when geocoded list grows
   useEffect(() => {
     const map = mapInstanceRef.current;
@@ -294,6 +344,16 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
               <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Location permission error */}
+      {locationError && (
+        <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur border border-amber-200 rounded-xl shadow-sm px-3 py-1.5 text-xs text-amber-700 flex items-center gap-1.5">
+          <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          {locationError}
         </div>
       )}
 
