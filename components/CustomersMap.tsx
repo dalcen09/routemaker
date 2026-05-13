@@ -162,9 +162,22 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
 
       const saved = loadMapView();
 
+      // If no saved view, try to centre on the user's current position
+      let initialCenter = { lat: 35.6895, lng: 139.6917 };
+      if (!saved && navigator.geolocation) {
+        await new Promise<void>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => { initialCenter = { lat: pos.coords.latitude, lng: pos.coords.longitude }; resolve(); },
+            () => resolve(), // permission denied or timeout — fall back to Tokyo
+            { timeout: 5000 }
+          );
+        });
+      }
+      if (cancelled || !mapRef.current) return;
+
       const map = new Map(mapRef.current, {
-        zoom: saved?.zoom ?? 10,
-        center: saved ? { lat: saved.lat, lng: saved.lng } : { lat: 35.6895, lng: 139.6917 },
+        zoom: saved?.zoom ?? 13,
+        center: saved ? { lat: saved.lat, lng: saved.lng } : initialCenter,
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: true,
