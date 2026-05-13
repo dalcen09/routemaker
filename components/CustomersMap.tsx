@@ -239,7 +239,7 @@ export default function CustomersMap({ customers, selected, onToggle }: Props) {
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 10,
-            fillColor: "#3B82F6",
+            fillColor: "#EA580C",
             fillOpacity: 1,
             strokeColor: "#fff",
             strokeWeight: 3,
