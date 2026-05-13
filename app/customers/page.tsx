@@ -366,8 +366,9 @@ function CustomersInner() {
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col min-h-0">
-                  {/* Mobile cards */}
-                  <div className="md:hidden space-y-2 pb-4">
+                  {/* Mobile cards — scrollable area */}
+                  <div className="md:hidden flex-1 overflow-y-auto min-h-0">
+                    <div className="space-y-2 pb-2">
                     {sorted.length === 0 ? (
                       <div className="py-12 text-center text-slate-400 text-sm">該当する顧客が見つかりません</div>
                     ) : paged.map((customer) => (
@@ -404,11 +405,15 @@ function CustomersInner() {
                         </div>
                       </div>
                     ))}
+                    </div>
+                  </div>
+
+                  {/* Mobile pagination — always visible at bottom */}
+                  <div className="md:hidden shrink-0 pt-2 pb-4 border-t border-slate-100 mt-2">
                     {selectedCount > 0 && (
-                      <button onClick={() => setSelected(new Set())} className="text-xs text-blue-500 hover:text-blue-700 transition-colors">選択を解除</button>
+                      <button onClick={() => setSelected(new Set())} className="text-xs text-blue-500 hover:text-blue-700 transition-colors mb-2 block">選択を解除</button>
                     )}
-                    {/* Mobile pagination */}
-                    <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-500">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                       <span>表示:</span>
                       {([10, 20, 50, 100, 0] as const).map((n) => (
                         <button key={n} onClick={() => handlePageSize(n)}
